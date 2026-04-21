@@ -9,14 +9,23 @@ interface LoginProps {
 }
 
 export default function Login({ onAuthComplete }: LoginProps) {
+  const [isLoggingIn, setIsLoggingIn] = React.useState<string | null>(null);
+
   const handleLogin = async (intendedRole: 'admin' | 'farmer') => {
+    setIsLoggingIn(intendedRole);
     try {
+      console.log(`Starting login for ${intendedRole}...`);
       const user = await signInWithGoogle();
-      if (!user) return;
+      
+      if (!user) {
+        setIsLoggingIn(null);
+        return;
+      }
 
       // Special case for admin restriction
       const adminEmail = 'jordache.romania@gmail.com';
       if (intendedRole === 'admin' && user.email !== adminEmail) {
+        setIsLoggingIn(null);
         alert(`Acces Refuzat: Doar adresa de email ${adminEmail} are privilegii de administrator.`);
         return;
       }
@@ -24,9 +33,9 @@ export default function Login({ onAuthComplete }: LoginProps) {
       const userRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userRef);
 
+      let userData: any;
       if (!userDoc.exists()) {
-        // New user setup
-        const userData = {
+        userData = {
           uid: user.uid,
           email: user.email,
           displayName: user.displayName,
@@ -34,31 +43,30 @@ export default function Login({ onAuthComplete }: LoginProps) {
           createdAt: serverTimestamp(),
         };
         await setDoc(userRef, userData);
-        onAuthComplete(userData);
       } else {
-        const existingData = userDoc.data();
-        // Check if role matches intended (except for admin who can be admin)
-        if (intendedRole === 'admin' && existingData.role !== 'admin') {
-           // Should not happen with the email check but good to have
-           console.log("Existing user redirected to admin role based on intended login or email");
-        }
-        onAuthComplete(existingData);
+        userData = userDoc.data();
       }
+      
+      onAuthComplete(userData);
     } catch (error: any) {
       console.error("Login failed:", error);
-      alert(`Eroare la conectare: ${error.message || 'Verifică conexiunea la internet sau setările browserului.'}`);
+      alert(`Eroare la conectare: ${error.message || 'Eroare necunoscută'}. 
+
+Sugestie: Dacă folosești Vercel, asigură-te că domeniul este adăugat în Firebase Console -> Authentication -> Settings -> Authorized domains.`);
+    } finally {
+      setIsLoggingIn(null);
     }
   };
 
   return (
-    <div className="h-screen flex overflow-hidden font-sans bg-jss-beige text-jss-text">
+    <div className="min-h-screen flex flex-col md:flex-row overflow-y-auto font-sans bg-jss-beige text-jss-text">
       {/* Admin Section - Dark Green */}
       <motion.div 
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="w-1/2 h-full bg-jss-green-dark text-white flex flex-col p-12 relative border-r-4 border-jss-green-primary"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full md:w-1/2 min-h-[50vh] md:h-full bg-jss-green-dark text-white flex flex-col p-8 md:p-12 relative border-b-4 md:border-b-0 md:border-r-4 border-jss-green-primary"
       >
-        <div className="mb-16">
+        <div className="mb-8 md:mb-16">
           <h1 className="text-4xl font-bold tracking-tight text-jss-green-light">JSS</h1>
           <p className="text-jss-muted uppercase tracking-widest text-xs font-semibold mt-2">
             Platforma de Vanzari Produse din Ferme
@@ -74,10 +82,20 @@ export default function Login({ onAuthComplete }: LoginProps) {
           <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8 text-center">
             <button
               onClick={() => handleLogin('admin')}
-              className="login-btn w-full"
+              disabled={!!isLoggingIn}
+              className={`login-btn w-full ${isLoggingIn === 'admin' ? 'opacity-50 cursor-wait' : ''}`}
             >
-              <LogIn size={20} />
-              Conectare Administrator
+              {isLoggingIn === 'admin' ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-jss-green-light border-t-transparent rounded-full animate-spin"></div>
+                  Se conectează...
+                </div>
+              ) : (
+                <>
+                  <LogIn size={20} />
+                  Conectare Administrator
+                </>
+              )}
             </button>
           </div>
 
@@ -101,9 +119,9 @@ export default function Login({ onAuthComplete }: LoginProps) {
 
       {/* Farmer Section - Warm Beige */}
       <motion.div 
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="w-1/2 h-full flex flex-col p-12 relative"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full md:w-1/2 min-h-[50vh] md:h-full flex flex-col p-8 md:p-12 relative"
       >
         <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
           <div className="mb-8">
@@ -115,10 +133,20 @@ export default function Login({ onAuthComplete }: LoginProps) {
             <p className="text-xs text-slate-400 mb-4">Intră în platformă pentru a actualiza oferta de produse.</p>
             <button
               onClick={() => handleLogin('farmer')}
-              className="login-btn"
+              disabled={!!isLoggingIn}
+              className={`login-btn w-full ${isLoggingIn === 'farmer' ? 'opacity-50 cursor-wait' : ''}`}
             >
-              <LogIn size={20} />
-              Conectare Fermier
+              {isLoggingIn === 'farmer' ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-jss-green-primary border-t-transparent rounded-full animate-spin"></div>
+                  Se conectează...
+                </div>
+              ) : (
+                <>
+                  <LogIn size={20} />
+                  Conectare Fermier
+                </>
+              )}
             </button>
           </div>
 
