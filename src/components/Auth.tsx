@@ -15,7 +15,8 @@ export default function Login({ onAuthComplete }: LoginProps) {
       if (!user) return;
 
       // Special case for admin restriction
-      if (intendedRole === 'admin' && user.email !== 'jordache.romania@gmail.com') {
+      const authorizedAdmins = ['jordache.romania@gmail.com', 'jordache.genetics@gmail.com'];
+      if (intendedRole === 'admin' && !authorizedAdmins.includes(user.email || '')) {
         alert("Acces Refuzat: Doar administratorul autorizat se poate conecta în această secțiune.");
         return;
       }
@@ -70,7 +71,7 @@ export default function Login({ onAuthComplete }: LoginProps) {
           </div>
 
           <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8">
-            <p className="text-xs text-jss-muted mb-4 italic">Acces restricționat pentru: jordache.romania@gmail.com</p>
+            <p className="text-xs text-jss-muted mb-4 italic text-center">Acces securizat pentru administratorii JSS</p>
             <button
               onClick={() => handleLogin('admin')}
               className="login-btn"
