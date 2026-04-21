@@ -1,0 +1,104 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'jordache.romania@gmail.com';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+
+    function isValidUser(data) {
+      return data.email is string && data.email.size() <= 100 &&
+             data.role in ['admin', 'farmer'] &&
+             (data.role == 'admin' ? data.email == 'jordache.romania@gmail.com' : true) &&
+             data.createdAt == request.time;
+    }
+
+    function isValidProduct(data) {
+      return data.farmerId is string && data.farmerId == request.auth.uid &&
+             data.farmName is string && data.farmName.size() <= 200 &&
+             data.type is string && data.type.size() <= 100 &&
+             data.quantity is number && data.quantity >= 0 &&
+             data.pricePerKg is number && data.pricePerKg >= 0 &&
+             data.createdAt == request.time;
+    }
+
+    function isValidStore(data) {
+      return data.name is string && data.name.size() <= 200 &&
+             data.type in ['carmangerie', 'lactate', 'mixt'];
+    }
+
+    function isValidPotentialPartner(data) {
+      return data.name is string && data.name.size() <= 200 &&
+             data.type in ['carmangerie', 'lactate', 'mixt'] &&
+             data.website is string && data.website.size() <= 500 &&
+             data.city == 'Bucuresti';
+    }
+
+    // --- Match Rules ---
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && isValidUser(incoming()) && 
+                    incoming().keys().hasAll(['email', 'role', 'createdAt']) && 
+                    incoming().keys().size() <= 5;
+      allow update: if (isOwner(userId) || isAdmin()) && 
+                    (isAdmin() || (incoming().role == existing().role && incoming().email == existing().email)) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'farmName']);
+    }
+
+    match /products/{productId} {
+      allow get: if isSignedIn() && (isAdmin() || (isOwner(existing().farmerId)));
+      allow list: if isSignedIn() && (isAdmin() || (resource.data.farmerId == request.auth.uid));
+      allow create: if isSignedIn() && isValidProduct(incoming()) && 
+                    incoming().keys().hasAll(['farmerId', 'farmName', 'type', 'quantity', 'pricePerKg', 'createdAt']) && 
+                    incoming().keys().size() <= 10;
+      allow update: if isSignedIn() && (
+        isAdmin() || (
+          isOwner(existing().farmerId) && 
+          incoming().farmerId == existing().farmerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['type', 'quantity', 'pricePerKg', 'deliveryTerms', 'paymentTerms', 'paymentReceived', 'partnerStoreId'])
+        )
+      );
+      allow delete: if isAdmin() || (isSignedIn() && isOwner(existing().farmerId));
+    }
+
+    match /partnerStores/{storeId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidStore(incoming());
+    }
+
+    match /potentialPartners/{partnerId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidPotentialPartner(incoming());
+    }
+  }
+}

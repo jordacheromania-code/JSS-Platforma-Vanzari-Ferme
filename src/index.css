@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=JetBrains+Mono:wght@400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-jss-green-dark: #1A3321;
+  --color-jss-green-primary: #2E5A39;
+  --color-jss-green-light: #A7D397;
+  --color-jss-beige: #F9F7F2;
+  --color-jss-beige-warm: #FDFBF7;
+  --color-jss-text: #2D302E;
+  --color-jss-muted: #7AA884;
+}
+
+@layer components {
+  .data-tag {
+    @apply text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1;
+  }
+  
+  .login-btn {
+    @apply flex items-center justify-center gap-3 border border-slate-200 rounded-lg px-6 py-3 w-full font-medium bg-white text-gray-800 hover:bg-gray-50 transition-all shadow-sm active:scale-[0.98];
+  }
+}

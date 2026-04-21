@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "User profile with role-based access control.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "farmer"] },
+        "farmName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role", "createdAt"]
+    },
+    "product": {
+      "title": "Product",
+      "description": "A production entry from a farmer.",
+      "type": "object",
+      "properties": {
+        "farmerId": { "type": "string" },
+        "farmName": { "type": "string" },
+        "type": { "type": "string" },
+        "quantity": { "type": "number" },
+        "pricePerKg": { "type": "number" },
+        "deliveryTerms": { "type": "string" },
+        "paymentTerms": { "type": "string" },
+        "paymentReceived": { "type": "boolean" },
+        "partnerStoreId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["farmerId", "type", "quantity", "pricePerKg", "createdAt"]
+    },
+    "partnerStore": {
+      "title": "Partner Store",
+      "description": "Stores that have partnerships with JSS.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["carmangerie", "lactate", "mixt"] },
+        "website": { "type": "string" }
+      },
+      "required": ["name", "type"]
+    },
+    "potentialPartner": {
+      "title": "Potential Partner",
+      "description": "Target stores in Bucharest for potential partnerships.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["carmangerie", "lactate", "mixt"] },
+        "website": { "type": "string" },
+        "city": { "type": "string" }
+      },
+      "required": ["name", "type", "website", "city"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "Stores user profiles."
+    },
+    "/products/{productId}": {
+      "schema": "product",
+      "description": "Stores all farmer products."
+    },
+    "/partnerStores/{storeId}": {
+      "schema": "partnerStore",
+      "description": "Stores partner shop information."
+    },
+    "/potentialPartners/{partnerId}": {
+      "schema": "potentialPartner",
+      "description": "List of profile shops in Bucharest."
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "JSS-Platforma de Vanzari produse din ferme",
+  "description": "Platformă pentru gestiunea produselor fermiere și vânzări către magazine partener, cu acces separat pentru administratori și fermieri.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
