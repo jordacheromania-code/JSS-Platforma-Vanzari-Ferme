@@ -15,9 +15,9 @@ export default function Login({ onAuthComplete }: LoginProps) {
       if (!user) return;
 
       // Special case for admin restriction
-      const authorizedAdmins = ['jordache.romania@gmail.com', 'jordache.genetics@gmail.com'];
-      if (intendedRole === 'admin' && !authorizedAdmins.includes(user.email || '')) {
-        alert("Acces Refuzat: Doar administratorul autorizat se poate conecta în această secțiune.");
+      const adminEmail = 'jordache.romania@gmail.com';
+      if (intendedRole === 'admin' && user.email !== adminEmail) {
+        alert(`Acces Refuzat: Doar adresa de email ${adminEmail} are privilegii de administrator.`);
         return;
       }
 
@@ -44,8 +44,9 @@ export default function Login({ onAuthComplete }: LoginProps) {
         }
         onAuthComplete(existingData);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed:", error);
+      alert(`Eroare la conectare: ${error.message || 'Verifică conexiunea la internet sau setările browserului.'}`);
     }
   };
 
@@ -70,11 +71,10 @@ export default function Login({ onAuthComplete }: LoginProps) {
             <p className="text-jss-muted text-sm italic">Gestionare sistem, magazine partener și fluxuri de plată.</p>
           </div>
 
-          <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8">
-            <p className="text-xs text-jss-muted mb-4 italic text-center">Acces securizat pentru administratorii JSS</p>
+          <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8 text-center">
             <button
               onClick={() => handleLogin('admin')}
-              className="login-btn"
+              className="login-btn w-full"
             >
               <LogIn size={20} />
               Conectare Administrator

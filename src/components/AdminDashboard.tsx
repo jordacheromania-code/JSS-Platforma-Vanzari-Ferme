@@ -135,7 +135,7 @@ export default function AdminDashboard({ user }: { user: any }) {
           </div>
           <div>
             <h1 className="font-bold tracking-tight text-jss-green-primary">JSS Admin Panel</h1>
-            <p className="text-[10px] uppercase font-bold opacity-40">System Operator / {user.email}</p>
+            <p className="text-[10px] uppercase font-bold opacity-40">System Operator</p>
           </div>
         </div>
         <button onClick={() => logout()} className="text-xs uppercase font-bold px-4 py-2 border border-slate-200 rounded hover:bg-slate-50 transition-colors flex items-center gap-2">

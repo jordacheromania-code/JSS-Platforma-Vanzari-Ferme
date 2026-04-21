@@ -12,10 +12,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && (
-        request.auth.token.email == 'jordache.romania@gmail.com' ||
-        request.auth.token.email == 'jordache.genetics@gmail.com'
-      );
+      return isSignedIn() && request.auth.token.email == 'jordache.romania@gmail.com';
     }
 
     function isOwner(userId) {
