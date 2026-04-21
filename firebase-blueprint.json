@@ -38,9 +38,36 @@
       "properties": {
         "name": { "type": "string" },
         "type": { "type": "string", "enum": ["carmangerie", "lactate", "mixt"] },
-        "website": { "type": "string" }
+        "website": { "type": "string" },
+        "cui": { "type": "string" },
+        "regCom": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "addedByFarmerId": { "type": "string" }
       },
       "required": ["name", "type"]
+    },
+    "order": {
+      "title": "Order",
+      "description": "An order recorded by a farmer for a partner store.",
+      "type": "object",
+      "properties": {
+        "farmerId": { "type": "string" },
+        "storeId": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "productName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "pricePerKg": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "deliveryDate": { "type": "string", "format": "date-time" },
+        "paymentMethod": { "type": "string", "enum": ["cash", "termen"] },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "observations": { "type": "string" },
+        "paid": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["farmerId", "storeId", "orderNumber", "productName", "totalAmount"]
     },
     "potentialPartner": {
       "title": "Potential Partner",
@@ -67,6 +94,10 @@
     "/partnerStores/{storeId}": {
       "schema": "partnerStore",
       "description": "Stores partner shop information."
+    },
+    "/orders/{orderId}": {
+      "schema": "order",
+      "description": "Stores all tracked orders/deliveries."
     },
     "/potentialPartners/{partnerId}": {
       "schema": "potentialPartner",

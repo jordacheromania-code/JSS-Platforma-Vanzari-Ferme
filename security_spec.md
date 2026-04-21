@@ -1,25 +1,30 @@
-# Security Specification for JSS-Platforma
+# Firestore Security Specification - JSS Farm Platform
 
 ## Data Invariants
-1. Only `jordache.romania@gmail.com` can have the `admin` role.
-2. A product must have a valid `farmerId` matching the creator's UID.
-3. Users cannot change their own roles once set, except via admin intervention.
-4. Partner stores and potential partners can only be managed by the admin.
+1. **Users**: Every user must have a role (`admin` or `farmer`). Admins are restricted by email.
+2. **Products**: Must belong to a farmer (`farmerId`). Price and quantity cannot be negative.
+3. **Partner Stores**: Can be created by admins or farmers (if tracking their own). Contain legal and contact info.
+4. **Orders**: Must link a farmer, a store, and have a unique order number. Quantities and prices must be valid.
+5. **Potential Partners**: Publicly visible list of target stores. Only admins can modify.
 
-## The Dirty Dozen (Test Payloads)
-1. User with email `evil@gmail.com` trying to set `role: 'admin'`. (REJECT)
-2. Farmer trying to update another farmer's product `quantity`. (REJECT)
-3. Anonymous user trying to read the list of `partnerStores`. (REJECT)
-4. Admin trying to create a product with missing `pricePerKg`. (REJECT)
-5. Farmer trying to delete someone else's product. (REJECT)
-6. User trying to create a `potentialPartner` without `website`. (REJECT)
-7. Farmer trying to update `paymentReceived` status on their own product (should only be admin or specifically permitted state change).
-8. User trying to read `users` collection without being admin. (REJECT - only self read allowed)
-9. User trying to inject a 1MB string into `farmName`. (REJECT)
-10. Creating a product with a `createdAt` date in the future. (REJECT)
-11. Updating a product's immutable `farmerId`. (REJECT)
-12. Listing all products without being an admin or filtering by owner. (REJECT)
+## The "Dirty Dozen" Payloads
+These payloads represent malicious or invalid data that MUST be rejected:
+1. **Privilege Escalation**: Farmer trying to set `role: 'admin'` in `/users`.
+2. **Identity Spoofing**: User A creating a product with `farmerId: UserB`.
+3. **Ghost Field**: Adding `isVerified: true` to a product entry without schema permission.
+4. **Invalid Type**: Setting `pricePerKg: "high"` (string instead of number).
+5. **Negative Resource**: Creating a product with `quantity: -100`.
+6. **Orphaned Order**: Creating an order for a non-existent `storeId`.
+7. **Bypassing Immutability**: Updating `farmerId` on an existing order.
+8. **Unauthorized Admin Write**: Non-admin user trying to delete a store from `potentialPartners`.
+9. **Identity Poisoning**: Using a 2KB string as a `productId`.
+10. **State Shortcutting**: Marking an order as `paid: true` when not the owner or admin.
+11. **Shadow User**: Creating a user profile for a different UID.
+12. **PII Leak**: Non-admin/non-owner trying to 'get' a user's phone number if it were stored in a private doc.
 
-## Audit Log
-- Initial draft of security rules following ABAC.
-- Validation helpers for all entities.
+## Match Blocks Coverage
+- `/users/{userId}`: Owner or Admin.
+- `/products/{productId}`: Owner or Admin.
+- `/partnerStores/{storeId}`: Signed in (read), Admin or Farmer (write).
+- `/orders/{orderId}`: Owner or Admin.
+- `/potentialPartners/{partnerId}`: Signed in (read), Admin (write).
