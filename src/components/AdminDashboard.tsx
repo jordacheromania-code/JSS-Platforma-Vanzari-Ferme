@@ -16,6 +16,7 @@ export default function AdminDashboard({ user }: { user: any }) {
   const [farmers, setFarmers] = useState<any[]>([]);
   const [isAddingStore, setIsAddingStore] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Form State for new Partner Store
   const [newStore, setNewStore] = useState({
@@ -129,36 +130,55 @@ export default function AdminDashboard({ user }: { user: any }) {
   return (
     <div className="min-h-screen bg-jss-beige text-jss-text font-sans">
       {/* Header */}
-      <header className="border-b border-jss-green-dark/20 px-6 py-4 flex items-center justify-between bg-white sticky top-0 z-20">
-        <div className="flex items-center gap-4">
-          <div className="bg-jss-green-dark text-jss-green-light p-2 rounded">
+      <header className="border-b border-jss-green-dark/20 px-4 py-4 lg:px-6 flex items-center justify-between bg-white sticky top-0 z-40">
+        <div className="flex items-center gap-3 lg:gap-4">
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="lg:hidden p-2 -ml-2 text-jss-green-primary"
+          >
             <LayoutDashboard size={20} />
+          </button>
+          <div className="bg-jss-green-dark text-jss-green-light p-1.5 lg:p-2 rounded">
+            <LayoutDashboard size={18} />
           </div>
           <div>
-            <h1 className="font-bold tracking-tight text-jss-green-primary">JSS Admin Panel</h1>
-            <p className="text-[10px] uppercase font-bold opacity-40">System Operator</p>
+            <h1 className="font-bold tracking-tight text-sm lg:text-base text-jss-green-primary truncate max-w-[120px] lg:max-w-none">JSS Admin Panel</h1>
+            <p className="text-[8px] lg:text-[10px] uppercase font-bold opacity-40">System Operator</p>
           </div>
         </div>
-        <button onClick={() => logout()} className="text-xs uppercase font-bold px-4 py-2 border border-slate-200 rounded hover:bg-slate-50 transition-colors flex items-center gap-2">
-          <LogOut size={14} /> Ieșire
+        <button onClick={() => logout()} className="text-[10px] lg:text-xs uppercase font-bold px-3 py-1.5 lg:px-4 lg:py-2 border border-slate-200 rounded hover:bg-slate-50 transition-colors flex items-center gap-2">
+          <LogOut size={14} /> <span className="hidden sm:inline">Ieșire</span>
         </button>
       </header>
 
-      <div className="flex">
+      <div className="flex relative">
+        {/* Mobile Sidebar Overlay */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSidebarOpen(false)}
+              className="fixed inset-0 bg-jss-green-dark/60 backdrop-blur-sm z-30 lg:hidden"
+            />
+          )}
+        </AnimatePresence>
+
         {/* Sidebar Navigation */}
-        <aside className="w-64 border-r border-jss-green-dark/10 min-h-[calc(100vh-73px)] p-6 space-y-8 bg-jss-beige-warm">
+        <aside className={`fixed lg:static inset-y-0 left-0 w-64 border-r border-jss-green-dark/10 p-6 space-y-8 bg-jss-beige-warm z-40 transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <nav className="space-y-4">
             {[
               { id: 'overview', icon: Package, label: 'Centralizator' },
               { id: 'farms', icon: CheckCircle, label: 'Ferme Partenere' },
               { id: 'partners', icon: Store, label: 'Parteneri' },
               { id: 'potential', icon: Users, label: 'Oportunități' },
-              { id: 'messages', icon: MessageSquare, label: 'Trimite Mesaj către Fermă' }
+              { id: 'messages', icon: MessageSquare, label: 'Mesagerie' }
             ].map((btn) => (
               <button 
                 key={btn.id}
-                onClick={() => setActiveView(btn.id as any)}
-                className={`w-full flex items-center gap-3 font-bold text-xs uppercase px-4 py-3 rounded-lg transition-all ${activeView === btn.id ? 'bg-jss-green-dark text-white' : 'text-jss-muted hover:bg-white/50'}`}
+                onClick={() => { setActiveView(btn.id as any); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 font-bold text-xs uppercase px-4 py-3 rounded-lg transition-all ${activeView === btn.id ? 'bg-jss-green-dark text-white shadow-lg' : 'text-jss-muted hover:bg-white/50'}`}
               >
                 <btn.icon size={16} />
                 {btn.label}
@@ -182,29 +202,29 @@ export default function AdminDashboard({ user }: { user: any }) {
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-8 overflow-y-auto">
+        <main className="flex-1 p-4 lg:p-8 overflow-y-auto max-w-full">
           {activeView === 'overview' && (
-            <div className="space-y-8">
-              <div className="flex justify-between items-end">
+            <div className="space-y-6 lg:space-y-8">
+              <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4">
                 <div>
                   <p className="data-tag">Vizualizare Date</p>
-                  <h2 className="text-3xl font-serif font-bold text-jss-green-dark">Produse din Ferme</h2>
+                  <h2 className="text-2xl lg:text-3xl font-serif font-bold text-jss-green-dark">Produse din Ferme</h2>
                 </div>
-                <div className="relative">
+                <div className="relative w-full lg:w-64">
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-30" />
                   <input 
                     type="text" 
                     placeholder="Filtrăre..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-white border border-slate-200 rounded-lg text-xs pl-8 pr-4 py-2 outline-none focus:ring-2 focus:ring-jss-green-light/50 transition-all w-64"
+                    className="bg-white border border-slate-200 rounded-lg text-xs pl-8 pr-4 py-2 outline-none focus:ring-2 focus:ring-jss-green-light/50 transition-all w-full"
                   />
                 </div>
               </div>
 
               {/* Data Table */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <table className="w-full text-left">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+                <table className="w-full text-left min-w-[700px]">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">
                       <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Fermă / Produs</th>
@@ -248,10 +268,10 @@ export default function AdminDashboard({ user }: { user: any }) {
           )}
 
           {activeView === 'farms' && (
-            <div className="space-y-8">
+            <div className="space-y-6 lg:space-y-8">
               <div>
                 <p className="data-tag">Portofoliu JSS</p>
-                <h2 className="text-3xl font-serif font-bold text-jss-green-dark">Ferme Partenere</h2>
+                <h2 className="text-2xl lg:text-3xl font-serif font-bold text-jss-green-dark">Ferme Partenere</h2>
               </div>
 
               <div className="space-y-6">
@@ -259,19 +279,19 @@ export default function AdminDashboard({ user }: { user: any }) {
                   const farmerProducts = allProducts.filter(p => p.farmerId === farmer.uid);
                   return (
                     <div key={farmer.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
-                      <div className="bg-jss-green-dark p-6 text-white flex justify-between items-center">
+                      <div className="bg-jss-green-dark p-4 lg:p-6 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                          <h3 className="text-xl font-serif font-bold">{farmer.farmName || 'Farmă fără nume'}</h3>
-                          <p className="text-xs opacity-60">Admin: {farmer.displayName} ({farmer.email})</p>
+                          <h3 className="text-lg lg:text-xl font-serif font-bold">{farmer.farmName || 'Farmă fără nume'}</h3>
+                          <p className="text-[10px] lg:text-xs opacity-60">Admin: {farmer.displayName} ({farmer.email})</p>
                         </div>
-                        <div className="bg-jss-green-light/20 px-4 py-2 rounded-lg">
-                          <span className="text-xs font-bold uppercase tracking-widest">{farmerProducts.length} Produse</span>
+                        <div className="bg-jss-green-light/20 px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg">
+                          <span className="text-[10px] lg:text-xs font-bold uppercase tracking-widest">{farmerProducts.length} Produse</span>
                         </div>
                       </div>
                       
                       {farmerProducts.length > 0 ? (
-                        <div className="p-0">
-                          <table className="w-full text-left">
+                        <div className="p-0 overflow-x-auto">
+                          <table className="w-full text-left min-w-[700px]">
                             <thead className="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-bold text-slate-400">
                               <tr>
                                 <th className="p-4">Produs / Cert.</th>
@@ -461,25 +481,25 @@ export default function AdminDashboard({ user }: { user: any }) {
           )}
 
           {activeView === 'potential' && (
-            <div className="space-y-8">
-              <div className="flex justify-between items-end">
+            <div className="space-y-6 lg:space-y-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
                   <p className="data-tag">Oportunități Market</p>
-                  <h2 className="text-3xl font-serif font-bold text-jss-green-dark">Magazine București</h2>
+                  <h2 className="text-2xl lg:text-3xl font-serif font-bold text-jss-green-dark">Magazine București</h2>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-3 w-full sm:w-auto">
                   {potentialStores.length === 0 && (
-                    <button onClick={seedPotentialPartners} className="text-xs font-bold border border-slate-200 rounded-lg px-4 py-2 hover:bg-amber-50">
+                    <button onClick={seedPotentialPartners} className="flex-1 sm:flex-none text-xs font-bold border border-slate-200 rounded-lg px-4 py-2 hover:bg-amber-50">
                       Importă Exemple
                     </button>
                   )}
-                  <button onClick={() => setIsAddingPotential(true)} className="bg-jss-green-dark text-white rounded-lg px-6 py-2 shadow-lg font-bold text-xs hover:opacity-90">
+                  <button onClick={() => setIsAddingPotential(true)} className="flex-1 sm:flex-none bg-jss-green-dark text-white rounded-lg px-6 py-2 shadow-lg font-bold text-xs hover:opacity-90">
                     <Plus size={16} className="inline mr-1" /> Adaugă
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {(potentialStores.length > 0 ? potentialStores : POTENTIAL_PARTNERS.map((p, i) => ({ ...p, id: `def-${i}` }))).map((store) => (
                   <div key={store.id} className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
                     <div className="flex justify-between items-start">
@@ -505,10 +525,10 @@ export default function AdminDashboard({ user }: { user: any }) {
           )}
 
           {activeView === 'messages' && (
-            <div className="space-y-8 h-full">
+            <div className="space-y-6 lg:space-y-8 h-full">
               <div>
                 <p className="data-tag">Comunicare Internă</p>
-                <h2 className="text-3xl font-serif font-bold text-jss-green-dark">Mesagerie JSS</h2>
+                <h2 className="text-2xl lg:text-3xl font-serif font-bold text-jss-green-dark">Mesagerie JSS</h2>
               </div>
               <MessagingSystem user={user} isAdmin={true} />
             </div>

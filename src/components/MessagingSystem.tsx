@@ -30,6 +30,7 @@ export default function MessagingSystem({ user, isAdmin }: MessagingSystemProps)
   const [isComposing, setIsComposing] = useState(false);
   const [farmers, setFarmers] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [view, setView] = useState<'sidebar' | 'list' | 'content'>('list'); // Mobile view state
 
   // New Message State
   const [newMsg, setNewMsg] = useState({
@@ -116,6 +117,7 @@ export default function MessagingSystem({ user, isAdmin }: MessagingSystemProps)
       }
     }
     setSelectedMessage(msg);
+    setView('content');
   };
 
   const deleteMessage = async (id: string, e: React.MouseEvent) => {
@@ -138,9 +140,9 @@ export default function MessagingSystem({ user, isAdmin }: MessagingSystemProps)
   };
 
   return (
-    <div className="flex h-[calc(100vh-160px)] bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+    <div className="flex h-[calc(100vh-160px)] lg:h-[calc(100vh-200px)] bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm relative">
       {/* Sidebar Navigation */}
-      <div className="w-64 border-r border-slate-100 bg-slate-50/30 p-4 flex flex-col">
+      <div className={`w-full lg:w-64 border-r border-slate-100 bg-slate-50/30 p-4 flex flex-col transition-all duration-300 ${view === 'sidebar' ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 hidden lg:flex'}`}>
         <button 
           onClick={() => setIsComposing(true)}
           className="w-full bg-jss-green-dark text-white rounded-xl py-3 px-4 font-bold text-xs uppercase mb-6 shadow-lg shadow-jss-green-dark/20 flex items-center justify-center gap-2"
@@ -155,7 +157,11 @@ export default function MessagingSystem({ user, isAdmin }: MessagingSystemProps)
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => { setActiveTab(tab.id as any); setSelectedMessage(null); }}
+              onClick={() => { 
+                setActiveTab(tab.id as any); 
+                setSelectedMessage(null);
+                setView('list');
+              }}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-xs font-bold uppercase transition-all ${activeTab === tab.id ? 'bg-white text-jss-green-dark shadow-sm ring-1 ring-slate-100' : 'text-slate-400 hover:bg-white/50'}`}
             >
               <div className="flex items-center gap-3">
@@ -173,7 +179,15 @@ export default function MessagingSystem({ user, isAdmin }: MessagingSystemProps)
       </div>
 
       {/* Message List */}
-      <div className="w-80 border-r border-slate-100 overflow-y-auto">
+      <div className={`w-full lg:w-80 border-r border-slate-100 overflow-y-auto ${view === 'list' ? 'block' : 'hidden lg:block'}`}>
+        <div className="lg:hidden p-4 border-b border-slate-100 flex items-center gap-2">
+          <button onClick={() => setView('sidebar')} className="p-2 -ml-2 text-slate-400">
+            <Inbox size={20} />
+          </button>
+          <h3 className="flex-1 font-bold text-sm text-jss-green-dark uppercase tracking-wider">
+            {activeTab === 'inbox' ? 'Mesaje Primite' : 'Mesaje Trimise'}
+          </h3>
+        </div>
         {messages.length > 0 ? (
           <div>
             {messages.map((msg) => (
@@ -210,10 +224,16 @@ export default function MessagingSystem({ user, isAdmin }: MessagingSystemProps)
       </div>
 
       {/* Message Content */}
-      <div className="flex-1 bg-slate-50/20 flex flex-col">
+      <div className={`flex-1 bg-slate-50/20 flex flex-col ${view === 'content' ? 'block' : 'hidden lg:flex'}`}>
         {selectedMessage ? (
           <div className="flex flex-col h-full animate-in fade-in duration-300">
-            <div className="p-8 bg-white border-b border-slate-100">
+            <div className="p-4 lg:p-8 bg-white border-b border-slate-100">
+              <button 
+                onClick={() => setView('list')}
+                className="lg:hidden mb-4 flex items-center gap-1 text-xs font-bold text-jss-green-dark bg-jss-beige/50 px-3 py-1.5 rounded-lg"
+              >
+                ← Înapoi la listă
+              </button>
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h2 className="text-2xl font-serif font-bold text-jss-green-dark mb-2">{selectedMessage.subject}</h2>

@@ -246,53 +246,55 @@ export default function FarmerDashboard({ user }: { user: any }) {
           )}
         </AnimatePresence>
 
-        {/* Tab Navigation */}
-        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-jss-green-primary/10 w-fit">
+      {/* Tab Navigation */}
+      <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-jss-green-primary/10 w-full overflow-x-auto no-scrollbar">
+        <div className="flex min-w-max">
           <button 
             onClick={() => setActiveTab('products')}
-            className={`px-6 py-2 rounded-xl transition-all ${activeTab === 'products' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
             Produsele Mele
           </button>
           <button 
             onClick={() => setActiveTab('partners')}
-            className={`px-6 py-2 rounded-xl transition-all ${activeTab === 'partners' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'partners' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
             Magazine Partenere
           </button>
           <button 
             onClick={() => setActiveTab('store_orders')}
-            className={`px-6 py-2 rounded-xl transition-all ${activeTab === 'store_orders' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'store_orders' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
             Comenzi Magazine
           </button>
           <button 
             onClick={() => setActiveTab('ledger')}
-            className={`px-6 py-2 rounded-xl transition-all ${activeTab === 'ledger' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'ledger' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
-            Registru Comenzi și Plăți
+            Registru
           </button>
           <button 
             onClick={() => setActiveTab('opportunities')}
-            className={`px-6 py-2 rounded-xl transition-all ${activeTab === 'opportunities' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'opportunities' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
-            Magazine Potențiale
+            Oportunități
           </button>
           <button 
             onClick={() => setActiveTab('messages')}
-            className={`px-6 py-2 rounded-xl transition-all ${activeTab === 'messages' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'} flex items-center gap-2`}
+            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'messages' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'} flex items-center gap-2`}
           >
-            <MessageSquare size={16} /> Contact Vânzări
+            <MessageSquare size={16} /> Contact
           </button>
         </div>
+      </div>
 
         {activeTab === 'products' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Inventar Produse</h2>
               <button 
                 onClick={() => setIsAddingProduct(true)}
-                className="flex items-center gap-2 bg-jss-green-primary text-white px-4 py-2 rounded-xl hover:opacity-90 shadow-sm"
+                className="flex items-center justify-center gap-2 bg-jss-green-primary text-white px-4 py-3 sm:py-2 rounded-xl hover:opacity-90 shadow-sm font-bold text-sm"
               >
                 <Plus size={20} />
                 Adaugă Produs
@@ -300,7 +302,7 @@ export default function FarmerDashboard({ user }: { user: any }) {
             </div>
 
             {/* Product List */}
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {products.map((product) => (
                 <motion.div 
                   layout
@@ -809,8 +811,8 @@ export default function FarmerDashboard({ user }: { user: any }) {
 
         {activeTab === 'opportunities' && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Oportunități de Parteneriat - București</h2>
-            <div className="grid md:grid-cols-3 gap-6">
+            <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Oportunități Parteneriat</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {(potentialStores.length > 0 ? potentialStores : POTENTIAL_PARTNERS.map((p, i) => ({ ...p, id: `def-${i}` }))).map((store) => (
                 <motion.div 
                   layout
