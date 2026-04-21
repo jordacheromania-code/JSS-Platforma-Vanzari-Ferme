@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Package, Store, Plus, Search, Trash2, CheckCircle, Clock, ExternalLink, LogOut, LayoutDashboard, MapPin, MessageSquare } from 'lucide-react';
+import { Users, Package, Store, Plus, Search, Trash2, CheckCircle, Clock, ExternalLink, LogOut, LayoutDashboard, MapPin, MessageSquare, ClipboardPaste } from 'lucide-react';
 import { db, logout, handleFirestoreError } from '../lib/firebase';
 import { collection, onSnapshot, query, addDoc, updateDoc, doc, deleteDoc, serverTimestamp, where } from 'firebase/firestore';
 
@@ -17,6 +17,9 @@ export default function AdminDashboard({ user }: { user: any }) {
   const [isAddingStore, setIsAddingStore] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [isBulkAdding, setIsBulkAdding] = useState(false);
+  const [bulkText, setBulkText] = useState('');
 
   // Form State for new Partner Store
   const [newStore, setNewStore] = useState({
@@ -50,11 +53,6 @@ export default function AdminDashboard({ user }: { user: any }) {
     const unsubPotential = onSnapshot(collection(db, 'potentialPartners'), (snapshot) => {
       const stores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setPotentialStores(stores);
-      
-      // Auto-seed if empty and we are looking at the potential view
-      if (stores.length === 0 && activeView === 'potential') {
-        seedPotentialPartners();
-      }
     });
 
     const unsubFarmers = onSnapshot(query(collection(db, 'users'), where('role', '==', 'farmer')), (snapshot) => {
@@ -72,7 +70,41 @@ export default function AdminDashboard({ user }: { user: any }) {
       unsubFarmers();
       unsubOrders();
     };
-  }, [activeView]);
+  }, []);
+
+  const handleBulkAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bulkText.trim()) return;
+
+    const lines = bulkText.split('\n').filter(line => line.trim());
+    let addedCount = 0;
+
+    for (const line of lines) {
+      // Try to find a URL in the line
+      const urlMatch = line.match(/(https?:\/\/[^\s]+)/i);
+      const url = urlMatch ? urlMatch[0] : '';
+      const name = line.replace(url, '').replace(/[-:]/g, ' ').trim();
+
+      if (name) {
+        try {
+          await addDoc(collection(db, 'potentialPartners'), {
+            name,
+            website: url || '#',
+            type: 'mixt',
+            city: 'București',
+            createdAt: serverTimestamp()
+          });
+          addedCount++;
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    }
+
+    alert(`Am adăugat ${addedCount} oportunități noi.`);
+    setBulkText('');
+    setIsBulkAdding(false);
+  };
 
   const handleTogglePayment = async (productId: string, currentStatus: boolean) => {
     try {
@@ -487,40 +519,52 @@ export default function AdminDashboard({ user }: { user: any }) {
                   <p className="data-tag">Oportunități Market</p>
                   <h2 className="text-2xl lg:text-3xl font-serif font-bold text-jss-green-dark">Magazine București</h2>
                 </div>
-                <div className="flex gap-3 w-full sm:w-auto">
-                  {potentialStores.length === 0 && (
-                    <button onClick={seedPotentialPartners} className="flex-1 sm:flex-none text-xs font-bold border border-slate-200 rounded-lg px-4 py-2 hover:bg-amber-50">
-                      Importă Exemple
-                    </button>
-                  )}
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                  <button 
+                    onClick={() => setIsBulkAdding(true)} 
+                    className="flex-1 sm:flex-none bg-jss-beige border border-jss-green-dark/20 text-jss-green-dark rounded-lg px-4 py-2 font-bold text-xs hover:bg-white transition-all shadow-sm"
+                  >
+                    <Plus size={16} className="inline mr-1" /> Încărcare Listă Text
+                  </button>
                   <button onClick={() => setIsAddingPotential(true)} className="flex-1 sm:flex-none bg-jss-green-dark text-white rounded-lg px-6 py-2 shadow-lg font-bold text-xs hover:opacity-90">
-                    <Plus size={16} className="inline mr-1" /> Adaugă
+                    <Plus size={16} className="inline mr-1" /> Adaugă Individual
                   </button>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(potentialStores.length > 0 ? potentialStores : POTENTIAL_PARTNERS.map((p, i) => ({ ...p, id: `def-${i}` }))).map((store) => (
-                  <div key={store.id} className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+                {(potentialStores.length > 0 ? potentialStores : []).map((store) => (
+                  <div key={store.id} className="bg-white rounded-xl border border-slate-200 p-6 space-y-4 hover:border-jss-green-light transition-all shadow-sm group">
                     <div className="flex justify-between items-start">
                       <span className="data-tag !mb-0">{store.type}</span>
-                      {!store.id.toString().startsWith('def-') && (
-                        <button onClick={() => deleteDoc(doc(db, 'potentialPartners', store.id))} className="text-red-300 hover:text-red-600">
-                          <Trash2 size={16} />
-                        </button>
-                      )}
+                      <button onClick={async () => {
+                        if(confirm('Ștergi această oportunitate?')) {
+                          await deleteDoc(doc(db, 'potentialPartners', store.id));
+                        }
+                      }} className="text-red-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                     <h3 className="text-xl font-bold font-serif text-jss-green-dark">{store.name}</h3>
                     <div className="flex items-center gap-2 opacity-50">
                       <MapPin size={12} />
                       <span className="text-[10px] font-bold uppercase">{store.city}</span>
                     </div>
-                    <a href={store.website} target="_blank" rel="noopener noreferrer" className="text-xs text-jss-green-primary flex items-center gap-1 hover:underline">
-                      Site Web <ExternalLink size={12} />
-                    </a>
+                    {store.website && store.website !== '#' ? (
+                      <a href={store.website} target="_blank" rel="noopener noreferrer" className="text-xs text-jss-green-primary flex items-center gap-1 hover:underline">
+                        Site Web <ExternalLink size={12} />
+                      </a>
+                    ) : (
+                      <span className="text-[10px] text-slate-300 italic">Fără website înregistrat</span>
+                    )}
                   </div>
                 ))}
               </div>
+              {potentialStores.length === 0 && (
+                <div className="p-20 text-center border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 italic">
+                  Nu există oportunități în listă. Folosește butonul de "Încărcare Listă Text" pentru a adăuga parteneri prin copy-paste.
+                </div>
+              )}
             </div>
           )}
 
@@ -538,85 +582,125 @@ export default function AdminDashboard({ user }: { user: any }) {
 
       {/* Modals */}
       <AnimatePresence>
-        {(isAddingStore || isAddingPotential) && (
+        {(isAddingStore || isAddingPotential || isBulkAdding) && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setIsAddingStore(false); setIsAddingPotential(false); }} className="absolute inset-0 bg-jss-green-dark/80 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setIsAddingStore(false); setIsAddingPotential(false); setIsBulkAdding(false); }} className="absolute inset-0 bg-jss-green-dark/80 backdrop-blur-sm" />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-200"
+              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 border border-slate-200"
             >
-              <h2 className="text-2xl font-serif font-bold mb-6 text-jss-green-primary border-b border-slate-100 pb-2">
-                {isAddingStore ? 'Adaugă Magazin Partener' : 'Adaugă Oportunitate București'}
-              </h2>
-              <form onSubmit={isAddingStore ? handleAddStore : handleAddPotential} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="data-tag">Nume Magazin</label>
-                  <input 
-                    required type="text"
-                    value={isAddingStore ? newStore.name : newPotential.name}
-                    onChange={(e) => isAddingStore ? setNewStore({...newStore, name: e.target.value}) : setNewPotential({...newPotential, name: e.target.value})}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-jss-green-light/50"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="data-tag">Profil Profile</label>
-                  <select 
-                    value={isAddingStore ? newStore.type : newPotential.type}
-                    onChange={(e) => isAddingStore ? setNewStore({...newStore, type: e.target.value as any}) : setNewPotential({...newPotential, type: e.target.value as any})}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none appearance-none cursor-pointer"
-                  >
-                    <option value="carmangerie">Carmangerie</option>
-                    <option value="lactate">Lactate</option>
-                    <option value="mixt">Mixt / General</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="data-tag">Link Website</label>
-                  <input 
-                    required={isAddingPotential} type="url" placeholder="https://..."
-                    value={isAddingStore ? newStore.website : newPotential.website}
-                    onChange={(e) => isAddingStore ? setNewStore({...newStore, website: e.target.value}) : setNewPotential({...newPotential, website: e.target.value})}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-jss-green-light/50"
-                  />
-                </div>
-                {isAddingStore && (
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="data-tag">CUI</label>
-                        <input 
-                          type="text" 
-                          value={newStore.cui}
-                          onChange={(e) => setNewStore({...newStore, cui: e.target.value})}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-jss-green-light/50"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="data-tag">Reg Com</label>
-                        <input 
-                          type="text" 
-                          value={newStore.regCom}
-                          onChange={(e) => setNewStore({...newStore, regCom: e.target.value})}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-jss-green-light/50"
-                        />
-                      </div>
+              {isBulkAdding ? (
+                <>
+                  <h2 className="text-2xl font-serif font-bold mb-2 text-jss-green-primary">Încărcare Listă Oportunități</h2>
+                  <p className="text-xs text-slate-500 mb-6 italic">Introdu lista de parteneri (nume și site pe fiecare rând).<br/>Exemplu: Mircea Macelaru - lamirceamacelaru.ro</p>
+                  <form onSubmit={handleBulkAdd} className="space-y-4">
+                    <div className="relative">
+                      <textarea 
+                        required
+                        placeholder="Nume Magazin 1 - site1.ro&#10;Nume Magazin 2 - site2.com"
+                        rows={12}
+                        value={bulkText}
+                        onChange={(e) => setBulkText(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-jss-green-light/50 font-mono pr-12"
+                      />
+                      <button 
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const text = await navigator.clipboard.readText();
+                            setBulkText(prev => prev ? prev + '\n' + text : text);
+                          } catch (err) {
+                            alert('Nu am putut accesa clipboard-ul. Te rugăm să folosești Ctrl+V.');
+                          }
+                        }}
+                        className="absolute top-3 right-3 p-2 bg-white border border-slate-200 rounded-lg text-jss-green-primary hover:bg-jss-beige transition-colors shadow-sm"
+                        title="Lipește din Clipboard"
+                      >
+                        <ClipboardPaste size={18} />
+                      </button>
                     </div>
+                    <div className="flex gap-4">
+                      <button type="button" onClick={() => setIsBulkAdding(false)} className="flex-1 text-xs font-bold uppercase py-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Anulare</button>
+                      <button type="submit" className="flex-1 bg-jss-green-dark text-white text-xs font-bold uppercase py-3 rounded-lg hover:opacity-90 shadow-lg">Încarcă Lista</button>
+                    </div>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-2xl font-serif font-bold mb-6 text-jss-green-primary border-b border-slate-100 pb-2">
+                    {isAddingStore ? 'Adaugă Magazin Partener' : 'Adaugă Oportunitate București'}
+                  </h2>
+                  <form onSubmit={isAddingStore ? handleAddStore : handleAddPotential} className="space-y-4">
                     <div className="space-y-1">
-                      <label className="data-tag">Adresă de Livrare</label>
+                      <label className="data-tag">Nume Magazin</label>
                       <input 
-                        type="text" 
-                        value={newStore.address}
-                        onChange={(e) => setNewStore({...newStore, address: e.target.value})}
+                        required type="text"
+                        value={isAddingStore ? newStore.name : newPotential.name}
+                        onChange={(e) => isAddingStore ? setNewStore({...newStore, name: e.target.value}) : setNewPotential({...newPotential, name: e.target.value})}
                         className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-jss-green-light/50"
                       />
                     </div>
-                  </>
-                )}
-                <div className="pt-4 flex gap-4">
-                  <button type="button" onClick={() => { setIsAddingStore(false); setIsAddingPotential(false); }} className="flex-1 text-xs font-bold uppercase py-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Anulări</button>
-                  <button type="submit" className="flex-1 bg-jss-green-dark text-white text-xs font-bold uppercase py-3 rounded-lg hover:opacity-90 shadow-lg">Salvează</button>
-                </div>
-              </form>
+                    <div className="space-y-1">
+                      <label className="data-tag">Profil Profile</label>
+                      <select 
+                        value={isAddingStore ? newStore.type : newPotential.type}
+                        onChange={(e) => isAddingStore ? setNewStore({...newStore, type: e.target.value as any}) : setNewPotential({...newPotential, type: e.target.value as any})}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none appearance-none cursor-pointer"
+                      >
+                        <option value="carmangerie">Carmangerie</option>
+                        <option value="lactate">Lactate</option>
+                        <option value="mixt">Mixt / General</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="data-tag">Link Website</label>
+                      <input 
+                        required={isAddingPotential} type="url" placeholder="https://..."
+                        value={isAddingStore ? newStore.website : newPotential.website}
+                        onChange={(e) => isAddingStore ? setNewStore({...newStore, website: e.target.value}) : setNewPotential({...newPotential, website: e.target.value})}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-jss-green-light/50"
+                      />
+                    </div>
+                    {isAddingStore && (
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="data-tag">CUI</label>
+                            <input 
+                              type="text" 
+                              value={newStore.cui}
+                              onChange={(e) => setNewStore({...newStore, cui: e.target.value})}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-jss-green-light/50"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="data-tag">Reg Com</label>
+                            <input 
+                              type="text" 
+                              value={newStore.regCom}
+                              onChange={(e) => setNewStore({...newStore, regCom: e.target.value})}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-jss-green-light/50"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="data-tag">Adresă de Livrare</label>
+                          <input 
+                            type="text" 
+                            value={newStore.address}
+                            onChange={(e) => setNewStore({...newStore, address: e.target.value})}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-jss-green-light/50"
+                          />
+                        </div>
+                      </>
+                    )}
+                    <div className="pt-4 flex gap-4">
+                      <button type="button" onClick={() => { setIsAddingStore(false); setIsAddingPotential(false); }} className="flex-1 text-xs font-bold uppercase py-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Anulare</button>
+                      <button type="submit" className="flex-1 bg-jss-green-dark text-white text-xs font-bold uppercase py-3 rounded-lg hover:opacity-90 shadow-lg">Salvează</button>
+                    </div>
+                  </form>
+                </>
+              )}
             </motion.div>
           </div>
         )}

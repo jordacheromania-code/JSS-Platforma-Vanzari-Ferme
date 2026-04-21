@@ -813,7 +813,7 @@ export default function FarmerDashboard({ user }: { user: any }) {
           <div className="space-y-6">
             <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Oportunități Parteneriat</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(potentialStores.length > 0 ? potentialStores : POTENTIAL_PARTNERS.map((p, i) => ({ ...p, id: `def-${i}` }))).map((store) => (
+              {potentialStores.map((store) => (
                 <motion.div 
                   layout
                   key={store.id}
@@ -827,7 +827,7 @@ export default function FarmerDashboard({ user }: { user: any }) {
                   </div>
                   <div className="p-6 flex-1 space-y-4">
                     <h3 className="text-xl font-serif font-bold text-jss-green-primary">{store.name}</h3>
-                    <p className="text-xs text-jss-muted">{store.city}</p>
+                    <p className="text-xs text-jss-muted">{store.city || 'București'}</p>
                     <a 
                       href={store.website} 
                       target="_blank" 
@@ -840,6 +840,11 @@ export default function FarmerDashboard({ user }: { user: any }) {
                 </motion.div>
               ))}
             </div>
+            {potentialStores.length === 0 && (
+              <p className="p-10 text-center bg-white rounded-xl border border-dashed border-slate-200 text-slate-400 italic">
+                Nu sunt oportunități active în listă. Administratorul va încărca partenerii noi în curând.
+              </p>
+            )}
           </div>
         )}
 
