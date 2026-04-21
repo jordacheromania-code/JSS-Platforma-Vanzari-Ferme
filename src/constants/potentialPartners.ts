@@ -1,9 +1,9 @@
 export const POTENTIAL_PARTNERS = [
+  { name: 'La Mircea Măcelaru', type: 'carmangerie', website: 'https://lamirceamacelaru.ro', city: 'București' },
   { name: 'Carmangeria Ozana', type: 'carmangerie', website: 'https://carmangeriaozana.ro', city: 'București' },
   { name: 'Carmangeria Dumi', type: 'carmangerie', website: 'https://www.carmangeriadumi.ro', city: 'București' },
   { name: 'Carmangeria Godac', type: 'carmangerie', website: 'https://www.carmangeriagodac.ro', city: 'București' },
   { name: 'Karmangeria', type: 'carmangerie', website: 'https://www.karmangeria.ro', city: 'București' },
-  { name: 'La Mircea Măcelaru', type: 'carmangerie', website: 'https://lamirceamacelaru.ro', city: 'București' },
   { name: 'Măcelărie Turcească', type: 'carmangerie', website: 'https://www.macelarieturceasca.ro', city: 'București' },
   { name: 'H&G Carmangerie', type: 'carmangerie', website: 'https://hgcarmangerie.metro.rest', city: 'București' },
   { name: 'Casa Angus', type: 'carmangerie', website: 'https://www.casa-angus.ro', city: 'București' },
