@@ -4,6 +4,8 @@ import { Plus, Package, Store, MapPin, CheckCircle, Clock, Truck, ChevronRight, 
 import { db, auth, logout, handleFirestoreError } from '../lib/firebase';
 import { collection, addDoc, query, where, onSnapshot, serverTimestamp, setDoc, doc, Timestamp, updateDoc } from 'firebase/firestore';
 
+import { POTENTIAL_PARTNERS } from '../constants/potentialPartners';
+
 export default function FarmerDashboard({ user }: { user: any }) {
   const [activeTab, setActiveTab] = useState<'products' | 'opportunities' | 'partners' | 'ledger' | 'store_orders'>('products');
   const [products, setProducts] = useState<any[]>([]);
@@ -802,7 +804,7 @@ export default function FarmerDashboard({ user }: { user: any }) {
           <div className="space-y-6">
             <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Oportunități de Parteneriat - București</h2>
             <div className="grid md:grid-cols-3 gap-6">
-              {potentialStores.map((store) => (
+              {(potentialStores.length > 0 ? potentialStores : POTENTIAL_PARTNERS.map((p, i) => ({ ...p, id: `def-${i}` }))).map((store) => (
                 <motion.div 
                   layout
                   key={store.id}
@@ -828,11 +830,6 @@ export default function FarmerDashboard({ user }: { user: any }) {
                   </div>
                 </motion.div>
               ))}
-              {potentialStores.length === 0 && (
-                <div className="col-span-full py-12 text-center bg-white rounded-2xl border border-jss-green-primary/10 text-jss-muted/50 italic">
-                  Lista de oportunități este momentan goală. Contactați administratorul.
-                </div>
-              )}
             </div>
           </div>
         )}

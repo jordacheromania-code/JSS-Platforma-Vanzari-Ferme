@@ -4,6 +4,8 @@ import { Users, Package, Store, Plus, Search, Trash2, CheckCircle, Clock, Extern
 import { db, logout, handleFirestoreError } from '../lib/firebase';
 import { collection, onSnapshot, query, addDoc, updateDoc, doc, deleteDoc, serverTimestamp, where } from 'firebase/firestore';
 
+import { POTENTIAL_PARTNERS } from '../constants/potentialPartners';
+
 export default function AdminDashboard({ user }: { user: any }) {
   const [activeView, setActiveView] = useState<'overview' | 'partners' | 'potential' | 'farms'>('overview');
   const [allProducts, setAllProducts] = useState<any[]>([]);
@@ -44,7 +46,13 @@ export default function AdminDashboard({ user }: { user: any }) {
     });
 
     const unsubPotential = onSnapshot(collection(db, 'potentialPartners'), (snapshot) => {
-      setPotentialStores(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const stores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPotentialStores(stores);
+      
+      // Auto-seed if empty and we are looking at the potential view
+      if (stores.length === 0 && activeView === 'potential') {
+        seedPotentialPartners();
+      }
     });
 
     const unsubFarmers = onSnapshot(query(collection(db, 'users'), where('role', '==', 'farmer')), (snapshot) => {
@@ -62,7 +70,7 @@ export default function AdminDashboard({ user }: { user: any }) {
       unsubFarmers();
       unsubOrders();
     };
-  }, []);
+  }, [activeView]);
 
   const handleTogglePayment = async (productId: string, currentStatus: boolean) => {
     try {
@@ -103,79 +111,7 @@ export default function AdminDashboard({ user }: { user: any }) {
   };
 
   const seedPotentialPartners = async () => {
-    const defaultPartners = [
-      { name: 'Carmangeria Ozana', type: 'carmangerie', website: 'https://carmangeriaozana.ro', city: 'București' },
-      { name: 'Carmangeria Dumi', type: 'carmangerie', website: 'https://www.carmangeriadumi.ro', city: 'București' },
-      { name: 'Carmangeria Godac', type: 'carmangerie', website: 'https://www.carmangeriagodac.ro', city: 'București' },
-      { name: 'Karmangeria', type: 'carmangerie', website: 'https://www.karmangeria.ro', city: 'București' },
-      { name: 'La Mircea Măcelaru', type: 'carmangerie', website: 'https://lamirceamacelaru.ro', city: 'București' },
-      { name: 'Măcelărie Turcească', type: 'carmangerie', website: 'https://www.macelarieturceasca.ro', city: 'București' },
-      { name: 'H&G Carmangerie', type: 'carmangerie', website: 'https://hgcarmangerie.metro.rest', city: 'București' },
-      { name: 'Casa Angus', type: 'carmangerie', website: 'https://www.casa-angus.ro', city: 'București' },
-      { name: 'Carmangeria Moldovan', type: 'carmangerie', website: 'https://www.carmangeriamoldovan.ro', city: 'București' },
-      { name: 'La Cătălin', type: 'mixt', website: 'https://la-catalin.ro', city: 'București' },
-      { name: 'Carmangeria Titulescu', type: 'carmangerie', website: 'https://carmangeriatitulescu.ro', city: 'București' },
-      { name: 'Coana Chirița', type: 'mixt', website: 'http://www.coanachirita.ro', city: 'București' },
-      { name: 'Băcănia Gramador', type: 'mixt', website: 'https://bacaniagramador.ro', city: 'București' },
-      { name: 'Băcănia Boierească', type: 'mixt', website: 'https://www.bucuresti.bacaniaboiereasca.ro', city: 'București' },
-      { name: 'Băcănia Veche', type: 'mixt', website: 'https://bacaniaveche.ro', city: 'București' },
-      { name: 'Băcănia Fermierului', type: 'mixt', website: 'https://bacaniafermierului.ro', city: 'București' },
-      { name: 'Băcănia Rod', type: 'mixt', website: 'https://www.bacaniarod.ro', city: 'București' },
-      { name: 'Băcănia La Stan', type: 'mixt', website: 'https://bacanialastan.ro', city: 'București' },
-      { name: 'La Baciu', type: 'mixt', website: 'http://www.labaciu.ro', city: 'București' },
-      { name: 'Real Foods', type: 'mixt', website: 'https://realfoods.ro', city: 'București' },
-      { name: 'Pukka Food', type: 'mixt', website: 'https://www.pukkafood.ro', city: 'București' },
-      { name: 'Lăptăria cu Caimac', type: 'lactate', website: 'https://laptariacucaimac.ro', city: 'București' },
-      { name: 'Napolact', type: 'lactate', website: 'https://www.napolact.ro', city: 'București' },
-      { name: 'Covalact', type: 'lactate', website: 'https://www.covalact.ro', city: 'București' },
-      { name: 'Olympus', type: 'lactate', website: 'https://www.olympusdairy.ro', city: 'București' },
-      { name: 'Delaco', type: 'lactate', website: 'https://www.delaco.ro', city: 'București' },
-      { name: 'Hochland', type: 'lactate', website: 'https://www.hochland.ro', city: 'București' },
-      { name: 'Mega Image', type: 'mixt', website: 'https://www.mega-image.ro', city: 'București' },
-      { name: 'Carrefour', type: 'mixt', website: 'https://www.carrefour.ro', city: 'București' },
-      { name: 'Auchan', type: 'mixt', website: 'https://www.auchan.ro', city: 'București' },
-      { name: 'Selgros', type: 'mixt', website: 'https://www.selgros.ro', city: 'București' },
-      { name: 'Metro', type: 'mixt', website: 'https://www.metro.ro', city: 'București' },
-      { name: 'Kaufland', type: 'mixt', website: 'https://www.kaufland.ro', city: 'București' },
-      { name: 'Profi', type: 'mixt', website: 'https://www.profi.ro', city: 'București' },
-      { name: 'Lidl', type: 'mixt', website: 'https://www.lidl.ro', city: 'București' },
-      { name: 'Penny', type: 'mixt', website: 'https://www.penny.ro', city: 'București' },
-      { name: 'LaDoiPași', type: 'mixt', website: 'https://www.ladoipasi.ro', city: 'București' },
-      { name: 'Froopt', type: 'mixt', website: 'https://www.froopt.ro', city: 'București' },
-      { name: 'SuperMercato', type: 'mixt', website: 'https://www.supermercato.ro', city: 'București' },
-      { name: 'Sezamo', type: 'mixt', website: 'https://www.sezamo.ro', city: 'București' },
-      { name: 'Freshful', type: 'mixt', website: 'https://www.freshful.ro', city: 'București' },
-      { name: 'Bringo', type: 'mixt', website: 'https://www.bringo.ro', city: 'București' },
-      { name: 'Gusturi Românești', type: 'mixt', website: 'https://www.gusturi-romanesti.ro', city: 'București' },
-      { name: 'Ferma Baciu', type: 'carmangerie', website: 'https://www.ferma-baciu.ro', city: 'București' },
-      { name: 'Ferma noastră', type: 'lactate', website: 'https://www.fermanoastra.ro', city: 'București' },
-      { name: 'Lactate Brădet', type: 'lactate', website: 'https://www.bradetlactate.ro', city: 'București' },
-      { name: 'Simultan', type: 'lactate', website: 'https://www.simultan.ro', city: 'București' },
-      { name: 'Five Continents', type: 'lactate', website: 'https://www.fivecontinents.ro', city: 'București' },
-      { name: 'Ana și Cornel', type: 'carmangerie', website: 'https://www.anasicornel.ro', city: 'București' },
-      { name: 'Aldis', type: 'carmangerie', website: 'https://www.aldis.ro', city: 'București' },
-      { name: 'Cris-Tim', type: 'carmangerie', website: 'https://www.cristim.ro', city: 'București' },
-      { name: 'Caroli', type: 'carmangerie', website: 'https://www.caroli.ro', city: 'București' },
-      { name: 'Reinert', type: 'carmangerie', website: 'https://www.reinert.ro', city: 'București' },
-      { name: 'Elit', type: 'carmangerie', website: 'https://www.elit.ro', city: 'București' },
-      { name: 'Angst', type: 'carmangerie', website: 'https://www.angst.ro', city: 'București' },
-      { name: 'Kosarom', type: 'carmangerie', website: 'https://www.kosarom.ro', city: 'București' },
-      { name: 'Meda', type: 'carmangerie', website: 'https://www.meda.ro', city: 'București' },
-      { name: 'Fox', type: 'carmangerie', website: 'https://www.fox.ro', city: 'București' },
-      { name: 'Sergiana', type: 'carmangerie', website: 'https://www.sergiana.ro', city: 'București' },
-      { name: 'Marcel', type: 'carmangerie', website: 'https://www.marcelprod.ro', city: 'București' },
-      { name: 'Doly-Com', type: 'carmangerie', website: 'https://www.doly-com.ro', city: 'București' },
-      { name: 'Agricola', type: 'carmangerie', website: 'https://www.agricola.ro', city: 'București' },
-      { name: 'Transavia', type: 'carmangerie', website: 'https://www.transavia.ro', city: 'București' },
-      { name: 'Delicii Libaneze', type: 'mixt', website: 'https://www.deliciilibaneze.ro', city: 'București' },
-      { name: 'Cofetăria Alice', type: 'mixt', website: 'https://cofetariaalice.ro', city: 'București' },
-      { name: 'Boutique du Pain', type: 'mixt', website: 'https://boutiquedupain.ro', city: 'București' },
-      { name: 'Grano', type: 'mixt', website: 'https://www.grano.ro', city: 'București' },
-      { name: 'Mega Delicatese', type: 'mixt', website: 'https://megadelicatese.ro', city: 'București' },
-      { name: 'FineStore', type: 'mixt', website: 'https://www.finestore.ro', city: 'București' },
-    ];
-
-    for (const partner of defaultPartners) {
+    for (const partner of POTENTIAL_PARTNERS) {
       try {
         await addDoc(collection(db, 'potentialPartners'), partner);
       } catch (err) {
@@ -542,13 +478,15 @@ export default function AdminDashboard({ user }: { user: any }) {
               </div>
 
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-                {potentialStores.map((store) => (
+                {(potentialStores.length > 0 ? potentialStores : POTENTIAL_PARTNERS.map((p, i) => ({ ...p, id: `def-${i}` }))).map((store) => (
                   <div key={store.id} className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
                     <div className="flex justify-between items-start">
                       <span className="data-tag !mb-0">{store.type}</span>
-                      <button onClick={() => deleteDoc(doc(db, 'potentialPartners', store.id))} className="text-red-300 hover:text-red-600">
-                        <Trash2 size={16} />
-                      </button>
+                      {!store.id.toString().startsWith('def-') && (
+                        <button onClick={() => deleteDoc(doc(db, 'potentialPartners', store.id))} className="text-red-300 hover:text-red-600">
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                     <h3 className="text-xl font-bold font-serif text-jss-green-dark">{store.name}</h3>
                     <div className="flex items-center gap-2 opacity-50">
