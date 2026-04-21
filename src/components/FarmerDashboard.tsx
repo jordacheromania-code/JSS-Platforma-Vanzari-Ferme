@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Package, Store, MapPin, CheckCircle, Clock, Truck, ChevronRight, LogOut, Info } from 'lucide-react';
+import { Plus, Package, Store, MapPin, CheckCircle, Clock, Truck, ChevronRight, LogOut, Info, MessageSquare } from 'lucide-react';
 import { db, auth, logout, handleFirestoreError } from '../lib/firebase';
 import { collection, addDoc, query, where, onSnapshot, serverTimestamp, setDoc, doc, Timestamp, updateDoc } from 'firebase/firestore';
 
 import { POTENTIAL_PARTNERS } from '../constants/potentialPartners';
+import MessagingSystem from './MessagingSystem';
 
 export default function FarmerDashboard({ user }: { user: any }) {
-  const [activeTab, setActiveTab] = useState<'products' | 'opportunities' | 'partners' | 'ledger' | 'store_orders'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'opportunities' | 'partners' | 'ledger' | 'store_orders' | 'messages'>('products');
   const [products, setProducts] = useState<any[]>([]);
   const [stores, setStores] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -276,6 +277,12 @@ export default function FarmerDashboard({ user }: { user: any }) {
             className={`px-6 py-2 rounded-xl transition-all ${activeTab === 'opportunities' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
             Magazine Potențiale
+          </button>
+          <button 
+            onClick={() => setActiveTab('messages')}
+            className={`px-6 py-2 rounded-xl transition-all ${activeTab === 'messages' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'} flex items-center gap-2`}
+          >
+            <MessageSquare size={16} /> Contact Vânzări
           </button>
         </div>
 
@@ -831,6 +838,13 @@ export default function FarmerDashboard({ user }: { user: any }) {
                 </motion.div>
               ))}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'messages' && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Contact Departamentul de Vânzări</h2>
+            <MessagingSystem user={user} isAdmin={false} />
           </div>
         )}
       </main>

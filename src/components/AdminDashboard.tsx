@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Package, Store, Plus, Search, Trash2, CheckCircle, Clock, ExternalLink, LogOut, LayoutDashboard, MapPin } from 'lucide-react';
+import { Users, Package, Store, Plus, Search, Trash2, CheckCircle, Clock, ExternalLink, LogOut, LayoutDashboard, MapPin, MessageSquare } from 'lucide-react';
 import { db, logout, handleFirestoreError } from '../lib/firebase';
 import { collection, onSnapshot, query, addDoc, updateDoc, doc, deleteDoc, serverTimestamp, where } from 'firebase/firestore';
 
 import { POTENTIAL_PARTNERS } from '../constants/potentialPartners';
+import MessagingSystem from './MessagingSystem';
 
 export default function AdminDashboard({ user }: { user: any }) {
-  const [activeView, setActiveView] = useState<'overview' | 'partners' | 'potential' | 'farms'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'partners' | 'potential' | 'farms' | 'messages'>('overview');
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [partnerStores, setPartnerStores] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -151,7 +152,8 @@ export default function AdminDashboard({ user }: { user: any }) {
               { id: 'overview', icon: Package, label: 'Centralizator' },
               { id: 'farms', icon: CheckCircle, label: 'Ferme Partenere' },
               { id: 'partners', icon: Store, label: 'Parteneri' },
-              { id: 'potential', icon: Users, label: 'Oportunități' }
+              { id: 'potential', icon: Users, label: 'Oportunități' },
+              { id: 'messages', icon: MessageSquare, label: 'Trimite Mesaj către Fermă' }
             ].map((btn) => (
               <button 
                 key={btn.id}
@@ -499,6 +501,16 @@ export default function AdminDashboard({ user }: { user: any }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {activeView === 'messages' && (
+            <div className="space-y-8 h-full">
+              <div>
+                <p className="data-tag">Comunicare Internă</p>
+                <h2 className="text-3xl font-serif font-bold text-jss-green-dark">Mesagerie JSS</h2>
+              </div>
+              <MessagingSystem user={user} isAdmin={true} />
             </div>
           )}
         </main>

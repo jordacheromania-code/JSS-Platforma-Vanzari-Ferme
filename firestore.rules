@@ -73,7 +73,30 @@ service cloud.firestore {
              data.city is string && data.city.size() <= 100;
     }
 
+    function isValidMessage(data) {
+      return data.senderId == request.auth.uid &&
+             data.senderName is string && data.senderName.size() <= 100 &&
+             data.senderRole in ['admin', 'farmer'] &&
+             data.receiverId is string && data.receiverId.size() <= 128 &&
+             data.subject is string && data.subject.size() <= 200 &&
+             data.body is string && data.body.size() <= 5000 &&
+             data.createdAt == request.time &&
+             data.read == false &&
+             data.attachments is list && data.attachments.size() <= 5;
+    }
+
     // --- Match Rules ---
+
+    match /messages/{messageId} {
+      allow get: if isSignedIn() && (isAdmin() || isOwner(existing().senderId) || isOwner(existing().receiverId));
+      allow list: if isSignedIn() && (isAdmin() || resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow create: if isSignedIn() && isValidMessage(incoming());
+      allow update: if isSignedIn() && (
+        (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['read'])) ||
+        (isOwner(existing().receiverId) && incoming().diff(existing()).affectedKeys().hasOnly(['read']))
+      );
+      allow delete: if isAdmin();
+    }
 
     match /users/{userId} {
       allow get: if isSignedIn() && (isOwner(userId) || isAdmin());

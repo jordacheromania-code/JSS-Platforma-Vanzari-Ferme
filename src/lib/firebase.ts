@@ -1,12 +1,14 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, query, collection, where, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 console.log("Firebase App initialized for project:", firebaseConfig.projectId);
 export const auth = getAuth(app);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 
 export interface AppUser {
@@ -75,6 +77,23 @@ export interface PotentialPartner {
   type: 'carmangerie' | 'lactate' | 'mixt';
   website: string;
   city: string;
+}
+
+export interface AppMessage {
+  id?: string;
+  senderId: string;
+  senderName: string;
+  senderRole: 'admin' | 'farmer';
+  receiverId: string; // 'admin' or farmer uid
+  subject: string;
+  body: string;
+  attachments: {
+    name: string;
+    url: string;
+    type: string;
+  }[];
+  createdAt: Timestamp;
+  read: boolean;
 }
 
 export const signInWithGoogle = async () => {

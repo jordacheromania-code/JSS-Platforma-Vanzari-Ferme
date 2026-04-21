@@ -80,6 +80,33 @@
         "city": { "type": "string" }
       },
       "required": ["name", "type", "website", "city"]
+    },
+    "message": {
+      "title": "Message",
+      "description": "Communication between admin and farmers.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderRole": { "type": "string", "enum": ["admin", "farmer"] },
+        "receiverId": { "type": "string" },
+        "subject": { "type": "string" },
+        "body": { "type": "string" },
+        "attachments": { 
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "url": { "type": "string" },
+              "type": { "type": "string" }
+            }
+          }
+        },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "senderName", "senderRole", "receiverId", "subject", "body", "createdAt"]
     }
   },
   "firestore": {
@@ -102,6 +129,10 @@
     "/potentialPartners/{partnerId}": {
       "schema": "potentialPartner",
       "description": "List of profile shops in Bucharest."
+    },
+    "/messages/{messageId}": {
+      "schema": "message",
+      "description": "List of internal messages."
     }
   }
 }
