@@ -8,7 +8,7 @@ import { POTENTIAL_PARTNERS } from '../constants/potentialPartners';
 import MessagingSystem from './MessagingSystem';
 
 export default function FarmerDashboard({ user }: { user: any }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'opportunities' | 'partners' | 'ledger' | 'store_orders' | 'messages' | 'stocks'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'opportunities' | 'partners' | 'ledger' | 'store_orders' | 'messages' | 'stocks'>('products');
   const [products, setProducts] = useState<any[]>([]);
   const [stores, setStores] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -232,159 +232,7 @@ export default function FarmerDashboard({ user }: { user: any }) {
       </header>
 
       <main className="max-w-6xl mx-auto p-6 space-y-8">
-        {activeTab === 'overview' && (
-          <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Panou de Control</h2>
-                <p className="text-sm text-jss-muted">Rezumatul activității tale comerciale gestionată de echipa noastră</p>
-              </div>
-              <div className="bg-white px-4 py-2 rounded-2xl border border-jss-green-primary/10 shadow-sm">
-                <p className="text-[10px] font-bold text-jss-muted uppercase">Vânzări Luna Curentă</p>
-                <p className="text-lg font-bold text-jss-green-primary">
-                  {user.manualStats?.totalSales !== undefined 
-                    ? user.manualStats.totalSales.toLocaleString()
-                    : orders
-                        .filter(o => {
-                          const d = o.deliveryDate?.toDate();
-                          const now = new Date();
-                          return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                        })
-                        .reduce((acc, o) => acc + o.totalAmount, 0)
-                        .toLocaleString()
-                  } RON
-                </p>
-              </div>
-            </div>
-
-            {/* Metrics Grid */}
-            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm space-y-1">
-                <div className="flex justify-between items-start text-jss-green-primary/40">
-                  <Truck size={20} />
-                </div>
-                <p className="text-xs font-bold text-jss-muted uppercase">Comenzi</p>
-                <p className="text-2xl font-bold">{user.manualStats?.ordersCount ?? orders.length}</p>
-              </div>
-              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm space-y-1">
-                <div className="flex justify-between items-start text-blue-400">
-                  <MapPin size={20} />
-                </div>
-                <p className="text-xs font-bold text-jss-muted uppercase">Oportunități</p>
-                <p className="text-2xl font-bold">{user.manualStats?.oppsCount ?? farmerOpportunities.length}</p>
-              </div>
-              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm space-y-1">
-                <div className="flex justify-between items-start text-green-400">
-                  <Store size={20} />
-                </div>
-                <p className="text-xs font-bold text-jss-muted uppercase">Magazine Contactate</p>
-                <p className="text-2xl font-bold">{user.manualStats?.contactedStores ?? stores.length}</p>
-              </div>
-              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm space-y-1">
-                <div className="flex justify-between items-start text-amber-400">
-                  <CheckCircle size={20} />
-                </div>
-                <p className="text-xs font-bold text-jss-muted uppercase">Clienți Câștigați</p>
-                <p className="text-2xl font-bold">
-                  {user.manualStats?.wonClients ?? farmerOpportunities.filter(o => o.status === 'Castigat').length}
-                </p>
-              </div>
-            </div>
-
-            {/* Dashboard Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <h3 className="text-lg font-serif font-bold text-jss-green-primary flex items-center gap-2">
-                  <BarChart3 size={20} /> Top 3 Produse
-                </h3>
-                <div className="space-y-3">
-                  {user.topProducts && user.topProducts.length > 0 ? (
-                    user.topProducts.map((name: string, idx: number) => (
-                      <div key={name} className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 rounded-full bg-jss-beige flex items-center justify-center text-[10px] font-bold text-jss-green-primary">
-                            {idx + 1}
-                          </span>
-                          <span className="text-sm font-bold">{name}</span>
-                        </div>
-                        <span className="text-[10px] font-bold text-jss-green-primary uppercase tracking-wider">Top Selecție</span>
-                      </div>
-                    ))
-                  ) : (
-                    Object.entries(
-                      orders.reduce((acc, current) => {
-                        acc[current.productName] = (acc[current.productName] || 0) + current.totalAmount;
-                        return acc;
-                      }, {} as {[key: string]: number})
-                    )
-                      .sort(([, a], [, b]) => (b as number) - (a as number))
-                      .slice(0, 3)
-                      .map(([name, val], idx) => (
-                        <div key={name} className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="w-6 h-6 rounded-full bg-jss-beige flex items-center justify-center text-[10px] font-bold text-jss-green-primary">
-                              {idx + 1}
-                            </span>
-                            <span className="text-sm font-bold">{name}</span>
-                          </div>
-                          <span className="text-xs font-mono font-bold bg-jss-green-primary/5 text-jss-green-primary px-3 py-1 rounded-lg">
-                            {val.toLocaleString()} RON
-                          </span>
-                        </div>
-                      ))
-                  )}
-                  {orders.length === 0 && (!user.topProducts || user.topProducts.length === 0) && (
-                    <p className="text-sm text-jss-muted italic">Nu există date despre vânzări încă.</p>
-                  )}
-                </div>
-
-                <div className="bg-jss-green-primary text-white p-6 rounded-3xl space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Info size={18} />
-                    <h4 className="font-bold">Recomandare Echipa Vânzări</h4>
-                  </div>
-                  <p className="text-sm opacity-90">
-                    {user.salesRecommendation || "Încă nu ai început colaborarea cu JSS. Contactează echipa pentru a programa o discuție."}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <h3 className="text-lg font-serif font-bold text-jss-green-primary flex items-center gap-2">
-                  <MessageSquare size={20} /> Activitate Echipă JSS
-                </h3>
-                <div className="bg-white rounded-3xl border border-jss-green-primary/10 shadow-sm overflow-hidden">
-                  <div className="divide-y divide-slate-50">
-                    {teamActivities.length > 0 ? (
-                      teamActivities.slice(0, 5).map((activity) => (
-                        <div key={activity.id} className="p-4 space-y-1">
-                          <div className="flex justify-between items-start">
-                            <p className="text-xs font-bold text-jss-green-primary capitalize">
-                              {activity.type === 'offer' ? '📄 Ofertă Trimisă' : 
-                               activity.type === 'call' ? '📞 Apel Efectuat' : 
-                               activity.type === 'acquisition' ? '🤝 Client Nou' : '📍 Vizită'}
-                            </p>
-                            <span className="text-[10px] text-slate-400">
-                              {activity.createdAt?.toDate().toLocaleDateString('ro-RO')}
-                            </span>
-                          </div>
-                          <p className="text-xs font-medium">{activity.storeName}</p>
-                          <p className="text-[10px] text-jss-muted line-clamp-1">{activity.result || activity.notes}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-8 text-center text-jss-muted/50 italic text-xs">
-                        Echipa noastră pregătește primele acțiuni pentru ferma ta.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Farm Name Setup */}
+        {/* Farm Name Setup - AT TOP */}
         <AnimatePresence>
           {showFarmNameInput && (
             <motion.div 
@@ -416,67 +264,68 @@ export default function FarmerDashboard({ user }: { user: any }) {
           )}
         </AnimatePresence>
 
-      {/* Tab Navigation */}
-      <nav className="bg-white p-1 rounded-2xl shadow-sm border border-jss-green-primary/10 w-full mb-6">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:flex xl:flex-nowrap items-stretch gap-1">
-          <button 
-            onClick={() => setActiveTab('overview')}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'overview' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
-          >
-            <LayoutDashboard size={18} className="shrink-0" />
-            <span className="leading-tight">Panou Control</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('products')}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'products' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
-          >
-            <Package size={18} className="shrink-0" />
-            <span className="leading-tight">Catalog Produse</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('stocks')}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'stocks' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
-          >
-            <Boxes size={18} className="shrink-0" />
-            <span className="leading-tight">Stocuri</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('partners')}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'partners' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
-          >
-            <Store size={18} className="shrink-0" />
-            <span className="leading-tight">Magazine</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('store_orders')}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'store_orders' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
-          >
-            <Truck size={18} className="shrink-0" />
-            <span className="leading-tight">Comenzi</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('ledger')}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'ledger' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
-          >
-            <BarChart3 size={18} className="shrink-0" />
-            <span className="leading-tight">Registru</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('opportunities')}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'opportunities' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
-          >
-            <MapPin size={18} className="shrink-0" />
-            <span className="leading-tight">Oportunități</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('messages')}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'messages' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
-          >
-            <MessageSquare size={18} className="shrink-0" />
-            <span className="leading-tight">Contact</span>
-          </button>
-        </div>
-      </nav>
+        {/* Tab Navigation - MIDDLE */}
+        <nav className="bg-white p-1 rounded-2xl shadow-sm border border-jss-green-primary/10 w-full mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:flex xl:flex-nowrap items-stretch gap-1">
+            <button 
+              onClick={() => setActiveTab('products')}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'products' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            >
+              <Package size={18} className="shrink-0" />
+              <span className="leading-tight">Catalog Produse</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('stocks')}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'stocks' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            >
+              <Boxes size={18} className="shrink-0" />
+              <span className="leading-tight">Stocuri</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('partners')}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'partners' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            >
+              <Store size={18} className="shrink-0" />
+              <span className="leading-tight">Magazine</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('store_orders')}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'store_orders' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            >
+              <Truck size={18} className="shrink-0" />
+              <span className="leading-tight">Comenzi</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('ledger')}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'ledger' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            >
+              <BarChart3 size={18} className="shrink-0" />
+              <span className="leading-tight">Registru</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('opportunities')}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'opportunities' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            >
+              <MapPin size={18} className="shrink-0" />
+              <span className="leading-tight">Oportunități</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('messages')}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'messages' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            >
+              <MessageSquare size={18} className="shrink-0" />
+              <span className="leading-tight">Contact</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('overview')}
+              className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'overview' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            >
+              <LayoutDashboard size={18} className="shrink-0" />
+              <span className="leading-tight">Panou Control</span>
+            </button>
+          </div>
+        </nav>
+
 
         {activeTab === 'stocks' && (
           <div className="space-y-6">
@@ -1167,23 +1016,14 @@ export default function FarmerDashboard({ user }: { user: any }) {
 
         {activeTab === 'messages' && (
           <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <a href="tel:0712345678" className="bg-white p-6 rounded-3xl border border-jss-green-primary/10 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <a href="tel:0765716692" className="bg-white p-6 rounded-3xl border border-jss-green-primary/10 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
                 <div className="bg-jss-green-primary/10 p-3 rounded-2xl text-jss-green-primary">
                   <Phone size={24} />
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-jss-muted uppercase">Telefon Direct</p>
-                  <p className="font-bold">0721 345 678</p>
-                </div>
-              </a>
-              <a href="mailto:vanzari@jss.ro" className="bg-white p-6 rounded-3xl border border-jss-green-primary/10 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-                <div className="bg-blue-50 p-3 rounded-2xl text-blue-600">
-                  <Mail size={24} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-jss-muted uppercase">Email Departament</p>
-                  <p className="font-bold">vanzari@jss.ro</p>
+                  <p className="font-bold">0765 716 692</p>
                 </div>
               </a>
               <div className="bg-white p-6 rounded-3xl border border-jss-green-primary/10 shadow-sm flex items-center gap-4">
@@ -1200,6 +1040,159 @@ export default function FarmerDashboard({ user }: { user: any }) {
             <div className="space-y-4">
               <h3 className="text-xl font-serif font-bold text-jss-green-primary">Trimite un mesaj rapid</h3>
               <MessagingSystem user={user} isAdmin={false} />
+            </div>
+          </div>
+        )}
+
+        {/* BOTTOM: Panou de Control (Overview) */}
+        {activeTab === 'overview' && (
+          <div className="space-y-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Panou de Control</h2>
+                <p className="text-sm text-jss-muted">Rezumatul activității tale comerciale gestionată de echipa noastră</p>
+              </div>
+              <div className="bg-white px-4 py-2 rounded-2xl border border-jss-green-primary/10 shadow-sm">
+                <p className="text-[10px] font-bold text-jss-muted uppercase">Vânzări Luna Curentă</p>
+                <p className="text-lg font-bold text-jss-green-primary">
+                  {user.manualStats?.totalSales !== undefined 
+                    ? user.manualStats.totalSales.toLocaleString()
+                    : orders
+                        .filter(o => {
+                          const d = o.deliveryDate?.toDate();
+                          const now = new Date();
+                          return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                        })
+                        .reduce((acc, o) => acc + o.totalAmount, 0)
+                        .toLocaleString()
+                  } RON
+                </p>
+              </div>
+            </div>
+
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm space-y-1">
+                <div className="flex justify-between items-start text-jss-green-primary/40">
+                  <Truck size={20} />
+                </div>
+                <p className="text-xs font-bold text-jss-muted uppercase">Comenzi</p>
+                <p className="text-2xl font-bold">{user.manualStats?.ordersCount ?? orders.length}</p>
+              </div>
+              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm space-y-1">
+                <div className="flex justify-between items-start text-blue-400">
+                  <MapPin size={20} />
+                </div>
+                <p className="text-xs font-bold text-jss-muted uppercase">Oportunități</p>
+                <p className="text-2xl font-bold">{user.manualStats?.oppsCount ?? farmerOpportunities.length}</p>
+              </div>
+              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm space-y-1">
+                <div className="flex justify-between items-start text-green-400">
+                  <Store size={20} />
+                </div>
+                <p className="text-xs font-bold text-jss-muted uppercase">Magazine Contactate</p>
+                <p className="text-2xl font-bold">{user.manualStats?.contactedStores ?? stores.length}</p>
+              </div>
+              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm space-y-1">
+                <div className="flex justify-between items-start text-amber-400">
+                  <CheckCircle size={20} />
+                </div>
+                <p className="text-xs font-bold text-jss-muted uppercase">Clienți Câștigați</p>
+                <p className="text-2xl font-bold">
+                  {user.manualStats?.wonClients ?? farmerOpportunities.filter(o => o.status === 'Castigat').length}
+                </p>
+              </div>
+            </div>
+
+            {/* Dashboard Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <h3 className="text-lg font-serif font-bold text-jss-green-primary flex items-center gap-2">
+                  <BarChart3 size={20} /> Top 3 Produse
+                </h3>
+                <div className="space-y-3">
+                  {user.topProducts && user.topProducts.length > 0 ? (
+                    user.topProducts.map((name: string, idx: number) => (
+                      <div key={name} className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="w-6 h-6 rounded-full bg-jss-beige flex items-center justify-center text-[10px] font-bold text-jss-green-primary">
+                            {idx + 1}
+                          </span>
+                          <span className="text-sm font-bold">{name}</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-jss-green-primary uppercase tracking-wider">Top Selecție</span>
+                      </div>
+                    ))
+                  ) : (
+                    Object.entries(
+                      orders.reduce((acc, current) => {
+                        acc[current.productName] = (acc[current.productName] || 0) + current.totalAmount;
+                        return acc;
+                      }, {} as {[key: string]: number})
+                    )
+                      .sort(([, a], [, b]) => (b as number) - (a as number))
+                      .slice(0, 3)
+                      .map(([name, val], idx) => (
+                        <div key={name} className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="w-6 h-6 rounded-full bg-jss-beige flex items-center justify-center text-[10px] font-bold text-jss-green-primary">
+                              {idx + 1}
+                            </span>
+                            <span className="text-sm font-bold">{name}</span>
+                          </div>
+                          <span className="text-xs font-mono font-bold bg-jss-green-primary/5 text-jss-green-primary px-3 py-1 rounded-lg">
+                            {val.toLocaleString()} RON
+                          </span>
+                        </div>
+                      ))
+                  )}
+                  {orders.length === 0 && (!user.topProducts || user.topProducts.length === 0) && (
+                    <p className="text-sm text-jss-muted italic">Nu există date despre vânzări încă.</p>
+                  )}
+                </div>
+
+                <div className="bg-jss-green-primary text-white p-6 rounded-3xl space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Info size={18} />
+                    <h4 className="font-bold">Recomandare Echipa Vânzări</h4>
+                  </div>
+                  <p className="text-sm opacity-90">
+                    {user.salesRecommendation || "Încă nu ai început colaborarea cu JSS. Contactează echipa pentru a programa o discuție."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-lg font-serif font-bold text-jss-green-primary flex items-center gap-2">
+                  <MessageSquare size={20} /> Activitate Echipă JSS
+                </h3>
+                <div className="bg-white rounded-3xl border border-jss-green-primary/10 shadow-sm overflow-hidden">
+                  <div className="divide-y divide-slate-50">
+                    {teamActivities.length > 0 ? (
+                      teamActivities.slice(0, 5).map((activity) => (
+                        <div key={activity.id} className="p-4 space-y-1">
+                          <div className="flex justify-between items-start">
+                            <p className="text-xs font-bold text-jss-green-primary capitalize">
+                              {activity.type === 'offer' ? '📄 Ofertă Trimisă' : 
+                               activity.type === 'call' ? '📞 Apel Efectuat' : 
+                               activity.type === 'acquisition' ? '🤝 Client Nou' : '📍 Vizită'}
+                            </p>
+                            <span className="text-[10px] text-slate-400">
+                              {activity.createdAt?.toDate().toLocaleDateString('ro-RO')}
+                            </span>
+                          </div>
+                          <p className="text-xs font-medium">{activity.storeName}</p>
+                          <p className="text-[10px] text-jss-muted line-clamp-1">{activity.result || activity.notes}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-8 text-center text-jss-muted/50 italic text-xs">
+                        Echipa noastră pregătește primele acțiuni pentru ferma ta.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

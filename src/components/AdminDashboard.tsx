@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Package, Store, Plus, Search, Trash2, CheckCircle, Clock, ExternalLink, LogOut, LayoutDashboard, MapPin, MessageSquare, ClipboardPaste, Star, Phone, Calendar, AlertTriangle } from 'lucide-react';
+import { Users, Package, Store, Plus, Search, Trash2, CheckCircle, Clock, ExternalLink, LogOut, LayoutDashboard, MapPin, MessageSquare, ClipboardPaste, Star, Phone, Calendar, AlertTriangle, BarChart3 } from 'lucide-react';
 import { db, logout, handleFirestoreError } from '../lib/firebase';
 import { collection, onSnapshot, query, addDoc, updateDoc, doc, deleteDoc, serverTimestamp, where } from 'firebase/firestore';
 
