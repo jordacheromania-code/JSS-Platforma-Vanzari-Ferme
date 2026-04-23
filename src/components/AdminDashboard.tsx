@@ -410,7 +410,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                     <div key={farmer.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
                       <div className="bg-jss-green-dark p-4 lg:p-6 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                          <h3 className="text-lg lg:text-xl font-serif font-bold">{farmer.farmName || 'Farmă fără nume'}</h3>
+                          <h3 className="text-lg lg:text-xl font-serif font-bold">{farmer.farmName || 'Ferma Neînregistrată'}</h3>
                           <p className="text-[10px] lg:text-xs opacity-60">Admin: {farmer.displayName} ({farmer.email})</p>
                         </div>
                         <div className="bg-jss-green-light/20 px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg">
