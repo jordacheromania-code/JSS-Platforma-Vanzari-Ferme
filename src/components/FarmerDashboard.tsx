@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Package, Store, MapPin, CheckCircle, Clock, Truck, ChevronRight, LogOut, Info, MessageSquare } from 'lucide-react';
+import { Plus, Package, Store, MapPin, CheckCircle, Clock, Truck, ChevronRight, LogOut, Info, MessageSquare, BarChart3, ArrowUpRight, ArrowDownLeft, AlertTriangle, Boxes, Search } from 'lucide-react';
 import { db, auth, logout, handleFirestoreError } from '../lib/firebase';
 import { collection, addDoc, query, where, onSnapshot, serverTimestamp, setDoc, doc, Timestamp, updateDoc } from 'firebase/firestore';
 
@@ -8,7 +8,7 @@ import { POTENTIAL_PARTNERS } from '../constants/potentialPartners';
 import MessagingSystem from './MessagingSystem';
 
 export default function FarmerDashboard({ user }: { user: any }) {
-  const [activeTab, setActiveTab] = useState<'products' | 'opportunities' | 'partners' | 'ledger' | 'store_orders' | 'messages'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'opportunities' | 'partners' | 'ledger' | 'store_orders' | 'messages' | 'stocks'>('products');
   const [products, setProducts] = useState<any[]>([]);
   const [stores, setStores] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -16,6 +16,8 @@ export default function FarmerDashboard({ user }: { user: any }) {
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isAddingOrder, setIsAddingOrder] = useState<string | null>(null); // Store ID
   const [isAddingStore, setIsAddingStore] = useState(false);
+  const [stockAdjustment, setStockAdjustment] = useState<{[key: string]: number}>({});
+  const [stockSearch, setStockSearch] = useState('');
   const [showFarmNameInput, setShowFarmNameInput] = useState(!user.farmName);
   const [newFarmName, setNewFarmName] = useState('');
 
@@ -253,7 +255,13 @@ export default function FarmerDashboard({ user }: { user: any }) {
             onClick={() => setActiveTab('products')}
             className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
-            Produsele Mele
+            Catalog Produse
+          </button>
+          <button 
+            onClick={() => setActiveTab('stocks')}
+            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'stocks' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'} flex items-center gap-2`}
+          >
+            <Boxes size={16} /> Stocuri
           </button>
           <button 
             onClick={() => setActiveTab('partners')}
@@ -287,6 +295,198 @@ export default function FarmerDashboard({ user }: { user: any }) {
           </button>
         </div>
       </div>
+
+        {activeTab === 'stocks' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Gestiune Stocuri</h2>
+                <p className="text-xs text-jss-muted">Monitorizează și ajustează stocurile disponibile pentru livrare</p>
+              </div>
+              <div className="relative w-full sm:w-64">
+                <input 
+                  type="text" 
+                  placeholder="Caută în stoc..." 
+                  value={stockSearch}
+                  onChange={(e) => setStockSearch(e.target.value)}
+                  className="w-full bg-white border border-jss-green-primary/10 rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-jss-green-primary/50 outline-none shadow-sm"
+                />
+                <Search className="absolute left-3 top-2.5 text-jss-muted" size={16} />
+              </div>
+            </div>
+
+            {/* Stock Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm flex items-center gap-4">
+                <div className="bg-jss-green-primary/10 p-3 rounded-xl text-jss-green-primary">
+                  <Boxes size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-jss-muted uppercase">Total Produse</p>
+                  <p className="text-xl font-bold">{products.length}</p>
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm flex items-center gap-4">
+                <div className="bg-amber-50 p-3 rounded-xl text-amber-600">
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-amber-600 uppercase">Stoc Scăzut</p>
+                  <p className="text-xl font-bold">{products.filter(p => p.quantity < (p.minOrderQuantity * 2)).length}</p>
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm flex items-center gap-4">
+                <div className="bg-blue-50 p-3 rounded-xl text-blue-600">
+                  <BarChart3 size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-blue-600 uppercase">Valoarea Stoc Est.</p>
+                  <p className="text-xl font-bold text-mono">
+                    {products.reduce((acc, p) => acc + (Number(p.quantity) * Number(p.pricePerKg)), 0).toLocaleString()} RON
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Unified Stock Control Table */}
+            <div className="bg-white rounded-3xl border border-jss-green-primary/10 shadow-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left min-w-[800px]">
+                  <thead>
+                    <tr className="bg-slate-50 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-100">
+                      <th className="p-4">Produs / Categorie</th>
+                      <th className="p-4">Stoc Curent</th>
+                      <th className="p-4">Indicator Nivel</th>
+                      <th className="p-4 text-center">Ajustare Rapidă</th>
+                      <th className="p-4 text-right">Ultima Actualizare</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {products
+                      .filter(p => p.type.toLowerCase().includes(stockSearch.toLowerCase()))
+                      .map((product) => {
+                        const isLow = product.quantity < (product.minOrderQuantity * 2);
+                        const progress = Math.min((product.quantity / (product.minOrderQuantity * 10 || 1)) * 100, 100);
+
+                        return (
+                          <tr key={product.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="p-4">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isLow ? 'bg-amber-100 text-amber-600' : 'bg-jss-beige text-jss-green-primary'}`}>
+                                  <Package size={20} />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold text-jss-green-primary">{product.type}</p>
+                                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">{product.certification} • {product.packagingType}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex flex-col">
+                                <p className={`text-lg font-mono font-bold ${isLow ? 'text-amber-600' : 'text-jss-green-dark'}`}>
+                                  {product.quantity} <span className="text-xs uppercase">KG/L</span>
+                                </p>
+                                <p className="text-[9px] text-slate-400">Min. Comandă: {product.minOrderQuantity} KG</p>
+                              </div>
+                            </td>
+                            <td className="p-4 w-48">
+                              <div className="space-y-1.5">
+                                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                  <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${progress}%` }}
+                                    className={`h-full rounded-full ${isLow ? 'bg-amber-500' : 'bg-jss-green-primary'}`}
+                                  />
+                                </div>
+                                <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest">
+                                  <span className={isLow ? 'text-amber-600' : 'text-slate-400'}>
+                                    {isLow ? 'Nivel Scăzut' : 'Optim'}
+                                  </span>
+                                  <span className="text-slate-300">{Math.round(progress)}%</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center justify-center gap-2">
+                                <button 
+                                  onClick={() => {
+                                    const val = Math.max(0, product.quantity - 1);
+                                    updateDoc(doc(db, 'products', product.id), { quantity: val });
+                                  }}
+                                  className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                >
+                                  <ArrowDownLeft size={16} />
+                                </button>
+                                
+                                <div className="flex gap-1 group">
+                                  <input 
+                                    type="number"
+                                    placeholder="Qty..."
+                                    className="w-16 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-center focus:ring-1 focus:ring-jss-green-primary outline-none"
+                                    value={stockAdjustment[product.id] || ''}
+                                    onChange={(e) => setStockAdjustment({
+                                      ...stockAdjustment,
+                                      [product.id]: Number(e.target.value)
+                                    })}
+                                    onKeyDown={async (e) => {
+                                      if (e.key === 'Enter' && stockAdjustment[product.id]) {
+                                        const newVal = product.quantity + stockAdjustment[product.id];
+                                        if (newVal >= 0) {
+                                          await updateDoc(doc(db, 'products', product.id), { quantity: newVal });
+                                          setStockAdjustment({ ...stockAdjustment, [product.id]: 0 });
+                                        }
+                                      }
+                                    }}
+                                  />
+                                  <button 
+                                    disabled={!stockAdjustment[product.id]}
+                                    onClick={async () => {
+                                      const newVal = product.quantity + (stockAdjustment[product.id] || 0);
+                                      if (newVal >= 0) {
+                                        await updateDoc(doc(db, 'products', product.id), { quantity: newVal });
+                                        setStockAdjustment({ ...stockAdjustment, [product.id]: 0 });
+                                      }
+                                    }}
+                                    className="p-1.5 bg-jss-green-primary text-white rounded-lg opacity-0 group-focus-within:opacity-100 hover:opacity-100 transition-all disabled:hidden"
+                                  >
+                                    <CheckCircle size={14} />
+                                  </button>
+                                </div>
+
+                                <button 
+                                  onClick={() => {
+                                    updateDoc(doc(db, 'products', product.id), { quantity: product.quantity + 1 });
+                                  }}
+                                  className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
+                                >
+                                  <ArrowUpRight size={16} />
+                                </button>
+                              </div>
+                            </td>
+                            <td className="p-4 text-right">
+                              <p className="text-[10px] font-bold text-slate-500">
+                                {product.createdAt?.toDate ? product.createdAt.toDate().toLocaleDateString('ro-RO') : 'N/A'}
+                              </p>
+                              <p className="text-[9px] text-slate-300">
+                                {product.createdAt?.toDate ? product.createdAt.toDate().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' }) : ''}
+                              </p>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    {products.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="p-20 text-center text-slate-300 italic text-sm">
+                          Nu ai adăugat încă produse în catalog.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
 
         {activeTab === 'products' && (
           <div className="space-y-6">
