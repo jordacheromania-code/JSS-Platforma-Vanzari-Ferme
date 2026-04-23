@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Package, Store, MapPin, CheckCircle, Clock, Truck, ChevronRight, LogOut, Info, MessageSquare, BarChart3, ArrowUpRight, ArrowDownLeft, AlertTriangle, Boxes, Search } from 'lucide-react';
+import { Plus, Package, Store, MapPin, CheckCircle, Clock, Truck, ChevronRight, LogOut, Info, MessageSquare, BarChart3, ArrowUpRight, ArrowDownLeft, AlertTriangle, Boxes, Search, LayoutDashboard, Calendar, Phone, Mail, ExternalLink } from 'lucide-react';
 import { db, auth, logout, handleFirestoreError } from '../lib/firebase';
 import { collection, addDoc, query, where, onSnapshot, serverTimestamp, setDoc, doc, Timestamp, updateDoc } from 'firebase/firestore';
 
@@ -8,11 +8,13 @@ import { POTENTIAL_PARTNERS } from '../constants/potentialPartners';
 import MessagingSystem from './MessagingSystem';
 
 export default function FarmerDashboard({ user }: { user: any }) {
-  const [activeTab, setActiveTab] = useState<'products' | 'opportunities' | 'partners' | 'ledger' | 'store_orders' | 'messages' | 'stocks'>('products');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'opportunities' | 'partners' | 'ledger' | 'store_orders' | 'messages' | 'stocks'>('overview');
   const [products, setProducts] = useState<any[]>([]);
   const [stores, setStores] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [potentialStores, setPotentialStores] = useState<any[]>([]);
+  const [farmerOpportunities, setFarmerOpportunities] = useState<any[]>([]);
+  const [teamActivities, setTeamActivities] = useState<any[]>([]);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isAddingOrder, setIsAddingOrder] = useState<string | null>(null); // Store ID
   const [isAddingStore, setIsAddingStore] = useState(false);
@@ -85,11 +87,23 @@ export default function FarmerDashboard({ user }: { user: any }) {
       setOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    // Fetch Farmer Specific Opportunities
+    const unsubscribeOpps = onSnapshot(query(collection(db, 'opportunities'), where('farmerId', '==', user.uid)), (snapshot) => {
+      setFarmerOpportunities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    // Fetch Farmer Specific Team Activities
+    const unsubscribeActivities = onSnapshot(query(collection(db, 'teamActivities'), where('farmerId', '==', user.uid)), (snapshot) => {
+      setTeamActivities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubscribeProducts();
       unsubscribeStores();
       unsubscribePotential();
       unsubscribeOrders();
+      unsubscribeOpps();
+      unsubscribeActivities();
     };
   }, [user.uid]);
 
@@ -218,6 +232,158 @@ export default function FarmerDashboard({ user }: { user: any }) {
       </header>
 
       <main className="max-w-6xl mx-auto p-6 space-y-8">
+        {activeTab === 'overview' && (
+          <div className="space-y-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Panou de Control</h2>
+                <p className="text-sm text-jss-muted">Rezumatul activității tale comerciale gestionată de echipa noastră</p>
+              </div>
+              <div className="bg-white px-4 py-2 rounded-2xl border border-jss-green-primary/10 shadow-sm">
+                <p className="text-[10px] font-bold text-jss-muted uppercase">Vânzări Luna Curentă</p>
+                <p className="text-lg font-bold text-jss-green-primary">
+                  {user.manualStats?.totalSales !== undefined 
+                    ? user.manualStats.totalSales.toLocaleString()
+                    : orders
+                        .filter(o => {
+                          const d = o.deliveryDate?.toDate();
+                          const now = new Date();
+                          return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                        })
+                        .reduce((acc, o) => acc + o.totalAmount, 0)
+                        .toLocaleString()
+                  } RON
+                </p>
+              </div>
+            </div>
+
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm space-y-1">
+                <div className="flex justify-between items-start text-jss-green-primary/40">
+                  <Truck size={20} />
+                </div>
+                <p className="text-xs font-bold text-jss-muted uppercase">Comenzi</p>
+                <p className="text-2xl font-bold">{user.manualStats?.ordersCount ?? orders.length}</p>
+              </div>
+              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm space-y-1">
+                <div className="flex justify-between items-start text-blue-400">
+                  <MapPin size={20} />
+                </div>
+                <p className="text-xs font-bold text-jss-muted uppercase">Oportunități</p>
+                <p className="text-2xl font-bold">{user.manualStats?.oppsCount ?? farmerOpportunities.length}</p>
+              </div>
+              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm space-y-1">
+                <div className="flex justify-between items-start text-green-400">
+                  <Store size={20} />
+                </div>
+                <p className="text-xs font-bold text-jss-muted uppercase">Magazine Contactate</p>
+                <p className="text-2xl font-bold">{user.manualStats?.contactedStores ?? stores.length}</p>
+              </div>
+              <div className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm space-y-1">
+                <div className="flex justify-between items-start text-amber-400">
+                  <CheckCircle size={20} />
+                </div>
+                <p className="text-xs font-bold text-jss-muted uppercase">Clienți Câștigați</p>
+                <p className="text-2xl font-bold">
+                  {user.manualStats?.wonClients ?? farmerOpportunities.filter(o => o.status === 'Castigat').length}
+                </p>
+              </div>
+            </div>
+
+            {/* Dashboard Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <h3 className="text-lg font-serif font-bold text-jss-green-primary flex items-center gap-2">
+                  <BarChart3 size={20} /> Top 3 Produse
+                </h3>
+                <div className="space-y-3">
+                  {user.topProducts && user.topProducts.length > 0 ? (
+                    user.topProducts.map((name: string, idx: number) => (
+                      <div key={name} className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="w-6 h-6 rounded-full bg-jss-beige flex items-center justify-center text-[10px] font-bold text-jss-green-primary">
+                            {idx + 1}
+                          </span>
+                          <span className="text-sm font-bold">{name}</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-jss-green-primary uppercase tracking-wider">Top Selecție</span>
+                      </div>
+                    ))
+                  ) : (
+                    Object.entries(
+                      orders.reduce((acc, current) => {
+                        acc[current.productName] = (acc[current.productName] || 0) + current.totalAmount;
+                        return acc;
+                      }, {} as {[key: string]: number})
+                    )
+                      .sort(([, a], [, b]) => (b as number) - (a as number))
+                      .slice(0, 3)
+                      .map(([name, val], idx) => (
+                        <div key={name} className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="w-6 h-6 rounded-full bg-jss-beige flex items-center justify-center text-[10px] font-bold text-jss-green-primary">
+                              {idx + 1}
+                            </span>
+                            <span className="text-sm font-bold">{name}</span>
+                          </div>
+                          <span className="text-xs font-mono font-bold bg-jss-green-primary/5 text-jss-green-primary px-3 py-1 rounded-lg">
+                            {val.toLocaleString()} RON
+                          </span>
+                        </div>
+                      ))
+                  )}
+                  {orders.length === 0 && (!user.topProducts || user.topProducts.length === 0) && (
+                    <p className="text-sm text-jss-muted italic">Nu există date despre vânzări încă.</p>
+                  )}
+                </div>
+
+                <div className="bg-jss-green-primary text-white p-6 rounded-3xl space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Info size={18} />
+                    <h4 className="font-bold">Recomandare Echipa Vânzări</h4>
+                  </div>
+                  <p className="text-sm opacity-90">
+                    {user.salesRecommendation || "Încă nu ai început colaborarea cu JSS. Contactează echipa pentru a programa o discuție."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-lg font-serif font-bold text-jss-green-primary flex items-center gap-2">
+                  <MessageSquare size={20} /> Activitate Echipă JSS
+                </h3>
+                <div className="bg-white rounded-3xl border border-jss-green-primary/10 shadow-sm overflow-hidden">
+                  <div className="divide-y divide-slate-50">
+                    {teamActivities.length > 0 ? (
+                      teamActivities.slice(0, 5).map((activity) => (
+                        <div key={activity.id} className="p-4 space-y-1">
+                          <div className="flex justify-between items-start">
+                            <p className="text-xs font-bold text-jss-green-primary capitalize">
+                              {activity.type === 'offer' ? '📄 Ofertă Trimisă' : 
+                               activity.type === 'call' ? '📞 Apel Efectuat' : 
+                               activity.type === 'acquisition' ? '🤝 Client Nou' : '📍 Vizită'}
+                            </p>
+                            <span className="text-[10px] text-slate-400">
+                              {activity.createdAt?.toDate().toLocaleDateString('ro-RO')}
+                            </span>
+                          </div>
+                          <p className="text-xs font-medium">{activity.storeName}</p>
+                          <p className="text-[10px] text-jss-muted line-clamp-1">{activity.result || activity.notes}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-8 text-center text-jss-muted/50 italic text-xs">
+                        Echipa noastră pregătește primele acțiuni pentru ferma ta.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Farm Name Setup */}
         <AnimatePresence>
           {showFarmNameInput && (
@@ -253,6 +419,13 @@ export default function FarmerDashboard({ user }: { user: any }) {
       {/* Tab Navigation */}
       <nav className="bg-white p-1 rounded-2xl shadow-sm border border-jss-green-primary/10 w-full mb-6">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:flex xl:flex-nowrap items-stretch gap-1">
+          <button 
+            onClick={() => setActiveTab('overview')}
+            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'overview' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+          >
+            <LayoutDashboard size={18} className="shrink-0" />
+            <span className="leading-tight">Panou Control</span>
+          </button>
           <button 
             onClick={() => setActiveTab('products')}
             className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'products' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
@@ -404,12 +577,12 @@ export default function FarmerDashboard({ user }: { user: any }) {
                                   <motion.div 
                                     initial={{ width: 0 }}
                                     animate={{ width: `${progress}%` }}
-                                    className={`h-full rounded-full ${isLow ? 'bg-amber-500' : 'bg-jss-green-primary'}`}
+                                    className={`h-full rounded-full ${product.stockAlert ? 'bg-red-500 animate-pulse' : isLow ? 'bg-amber-500' : 'bg-jss-green-primary'}`}
                                   />
                                 </div>
                                 <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest">
-                                  <span className={isLow ? 'text-amber-600' : 'text-slate-400'}>
-                                    {isLow ? 'Nivel Scăzut' : 'Optim'}
+                                  <span className={product.stockAlert ? 'text-red-500' : isLow ? 'text-amber-600' : 'text-slate-400'}>
+                                    {product.stockAlert ? '🚨 Alertă Stoc' : isLow ? 'Nivel Scăzut' : 'Optim'}
                                   </span>
                                   <span className="text-slate-300">{Math.round(progress)}%</span>
                                 </div>
@@ -520,7 +693,7 @@ export default function FarmerDashboard({ user }: { user: any }) {
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-bold text-lg">{product.type}</h3>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
                           product.certification === 'bio' ? 'bg-green-600 text-white' : 
@@ -529,6 +702,17 @@ export default function FarmerDashboard({ user }: { user: any }) {
                         }`}>
                           {product.certification}
                         </span>
+                        {/* Auto Labels from Admin */}
+                        {product.autoLabels?.map(label => (
+                          <span key={label} className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700 uppercase">
+                            {label}
+                          </span>
+                        ))}
+                        {product.manualLabels?.map(label => (
+                          <span key={label} className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-700 uppercase">
+                            {label}
+                          </span>
+                        ))}
                       </div>
                       <p className="text-sm text-jss-muted">{product.quantity} kg/săpt @ {product.pricePerKg} RON/kg (min)</p>
                     </div>
@@ -589,244 +773,135 @@ export default function FarmerDashboard({ user }: { user: any }) {
         {activeTab === 'partners' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Magazine Partenere Active</h2>
-              <div className="flex gap-2">
-                <button 
-                   onClick={() => setIsAddingStore(true)}
-                   className="bg-white text-jss-green-primary border border-jss-green-primary px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-jss-green-primary hover:text-white transition-all"
-                >
-                  <Plus size={18} /> Adaugă Magazin
-                </button>
-                <button 
-                  onClick={() => setActiveTab('ledger')}
-                  className="data-tag px-4 py-2 hover:bg-jss-green-primary hover:text-white transition-all cursor-pointer border border-jss-green-primary/20"
-                >
-                  Registru Comenzi și Plăți
-                </button>
-              </div>
+              <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Magazine Partenere</h2>
+              <button 
+                onClick={() => setIsAddingStore(true)}
+                className="bg-jss-green-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:opacity-90 flex items-center gap-2 shadow-sm"
+              >
+                <Plus size={16} /> Adaugă Magazin
+              </button>
             </div>
-            
-            <div className="grid gap-8 text-jss-text">
-              {stores.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-jss-green-primary/30 p-12 text-center space-y-4">
-                  <div className="bg-jss-green-primary/10 p-6 rounded-full text-jss-green-primary">
-                    <Store size={48} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-serif font-bold text-jss-green-primary">Niciun Magazin Partener</h3>
-                    <p className="text-sm text-jss-muted max-w-md mx-auto">
-                      Pentru a înregistra livrări și a urmări soldul, trebuie mai întâi să adaugi detaliile magazinului partener (Nume, CUI, Adresă).
-                    </p>
-                  </div>
-                  <button 
-                    onClick={() => setIsAddingStore(true)}
-                    className="bg-jss-green-primary text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-lg hover:shadow-xl transition-all active:scale-95"
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {stores.map((store) => {
+                const storeOrders = orders.filter(o => o.storeId === store.id);
+                const totalValue = storeOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+                const lastOrder = storeOrders.sort((a, b) => {
+                  const dateA = a.deliveryDate?.toDate() || 0;
+                  const dateB = b.deliveryDate?.toDate() || 0;
+                  return dateB - dateA;
+                })[0];
+                
+                const frequency = storeOrders.length > 5 ? 'Des' : storeOrders.length > 0 ? 'Ocazional' : 'Inactiv';
+
+                return (
+                  <motion.div 
+                    layout
+                    key={store.id}
+                    className="bg-white rounded-3xl border border-jss-green-primary/10 shadow-sm overflow-hidden flex flex-col"
                   >
-                    <Plus size={24} /> Configurează Primul Magazin
-                  </button>
-                </div>
-              ) : (
-                stores.map((store) => {
-                  const storeOrders = orders.filter(o => o.storeId === store.id);
-                  const unpaidAmount = storeOrders.filter(o => !o.paid).reduce((sum, o) => sum + o.totalAmount, 0);
-
-                  return (
-                    <motion.div 
-                      layout
-                      key={store.id}
-                      className="bg-white rounded-3xl border border-jss-green-primary/10 shadow-lg overflow-hidden"
-                    >
-                      <div className="bg-jss-green-primary/5 p-6 border-b border-jss-green-primary/10 flex flex-wrap justify-between items-start gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-jss-green-primary text-white p-3 rounded-2xl">
-                            <Store size={24} />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-serif font-bold text-jss-green-primary leading-tight">{store.name}</h3>
-                            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
-                              <p className="text-[10px] text-jss-muted uppercase tracking-widest font-bold">{store.type}</p>
-                              {store.cui && <p className="text-[10px] text-slate-500 font-mono">CUI: {store.cui}</p>}
-                              {store.regCom && <p className="text-[10px] text-slate-500 font-mono">RC: {store.regCom}</p>}
-                            </div>
-                            {store.address && (
-                              <div className="flex items-center gap-1 mt-2 text-[10px] text-slate-600 italic">
-                                 <MapPin size={12} /> {store.address}
-                              </div>
-                            )}
-                          </div>
+                    <div className="p-6 flex-1 space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div className="bg-jss-beige p-3 rounded-2xl text-jss-green-primary">
+                          <Store size={24} />
                         </div>
-                        
-                        <div className="flex items-center gap-6">
-                          <div className="text-right">
-                            <p className="text-[10px] font-bold text-jss-muted uppercase">Sold de încasat</p>
-                            <p className={`text-lg font-mono font-bold ${unpaidAmount > 0 ? 'text-red-500' : 'text-green-600'}`}>
-                              {unpaidAmount.toLocaleString()} RON
-                            </p>
-                          </div>
-                          <button 
-                            onClick={() => setIsAddingOrder(store.id)}
-                            className="bg-jss-green-primary text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:shadow-md transition-all active:scale-95"
-                          >
-                            <Plus size={18} /> Înregistrează Livrare
-                          </button>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                            store.relationshipStatus === 'activ' ? 'bg-green-100 text-green-700' : 
+                            store.relationshipStatus === 'in negociere' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                          }`}>
+                            {store.relationshipStatus || 'activ'}
+                          </span>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                            frequency === 'Des' ? 'border-green-200 text-green-600' : 'border-slate-200 text-slate-400'
+                          }`}>
+                            Frecv: {frequency}
+                          </span>
                         </div>
                       </div>
 
-                      {/* Store Deliveries Table / Cards */}
-                      <div className="space-y-0">
-                        {/* Mobile List View */}
-                        <div className="lg:hidden divide-y divide-slate-100">
-                          {storeOrders.map((order) => (
-                            <div key={order.id} className="p-4 space-y-3">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="text-[10px] font-bold text-slate-400 capitalize">#{order.orderNumber} / {order.deliveryDate?.toDate().toLocaleDateString('ro-RO')}</p>
-                                  <h4 className="text-sm font-bold text-jss-green-dark">{order.productName}</h4>
-                                </div>
-                                <span className={`text-[9px] font-bold px-2 py-1 rounded ${
-                                  order.paid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                }`}>
-                                  {order.paid ? 'ACHITAT' : 'NEACHITAT'}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-end">
-                                <div className="text-[10px] space-y-1">
-                                  <p><span className="opacity-50 uppercase font-bold">Cantitate:</span> {order.quantity} KG</p>
-                                  <p><span className="opacity-50 uppercase font-bold">Scadență:</span> {order.dueDate?.toDate().toLocaleDateString('ro-RO') || '---'}</p>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-xs font-mono font-bold text-jss-green-primary">{order.totalAmount.toLocaleString()} RON</p>
-                                  <p className="text-[9px] text-slate-400 uppercase font-bold">{order.paymentMethod === 'cash' ? 'Cash Livrare' : 'Termen'}</p>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                          {storeOrders.length === 0 && (
-                            <div className="p-8 text-center text-slate-300 italic text-xs">Fără livrări înregistrate.</div>
-                          )}
-                        </div>
+                      <div>
+                        <h3 className="text-xl font-serif font-bold text-jss-green-primary">{store.name}</h3>
+                        <p className="text-xs text-jss-muted flex items-center gap-1 mt-1">
+                          <MapPin size={12} /> {store.address || 'Adresă nespecificată'}
+                        </p>
+                      </div>
 
-                        {/* Desktop Table */}
-                        <div className="hidden lg:block overflow-x-auto">
-                          <table className="w-full text-left">
-                            <thead>
-                              <tr className="bg-slate-50 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-100">
-                                <th className="p-4">Nr. Comandă / Factură</th>
-                                <th className="p-4">Produs</th>
-                                <th className="p-4">Cant. / Preț</th>
-                                <th className="p-4 text-center">Data Livrării</th>
-                                <th className="p-4 text-center">Data Scadență</th>
-                                <th className="p-4">Tip Plată</th>
-                                <th className="p-4 text-right">Total Factură</th>
-                                <th className="p-4 text-right">Status</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                              {storeOrders.map((order) => (
-                                <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
-                                  <td className="p-4">
-                                    <p className="text-xs font-bold text-jss-green-primary"># {order.orderNumber}</p>
-                                    <p className="text-[10px] text-slate-400">Fact: {order.invoiceNumber}</p>
-                                  </td>
-                                  <td className="p-4 text-sm font-medium">{order.productName}</td>
-                                  <td className="p-4">
-                                    <p className="text-xs font-mono">{order.quantity} KG</p>
-                                    <p className="text-[9px] text-slate-400">{order.pricePerKg} RON/KG</p>
-                                  </td>
-                                  <td className="p-4 text-center">
-                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-lg text-[10px] text-slate-600 font-medium">
-                                      <Clock size={12} />
-                                      {order.deliveryDate?.toDate().toLocaleDateString('ro-RO')}
-                                    </div>
-                                  </td>
-                                  <td className="p-4 text-center">
-                                    {order.dueDate && (
-                                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium ${
-                                        !order.paid && order.dueDate.toDate() < new Date() ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
-                                      }`}>
-                                        <Clock size={12} />
-                                        {order.dueDate.toDate().toLocaleDateString('ro-RO')}
-                                      </div>
-                                    )}
-                                  </td>
-                                  <td className="p-4">
-                                    <span className="text-[10px] font-bold uppercase text-slate-500">
-                                      {order.paymentMethod === 'cash' ? '💵 Cash Livrare' : '⏳ Termen Plată'}
-                                    </span>
-                                  </td>
-                                  <td className="p-4 text-right">
-                                    <p className="font-mono font-bold text-sm">{order.totalAmount.toLocaleString()} RON</p>
-                                  </td>
-                                  <td className="p-4 text-right">
-                                    <span className={`text-[10px] font-bold px-2.5 py-1.5 rounded-lg uppercase ${
-                                      order.paid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                    }`}>
-                                      {order.paid ? 'ACHITAT' : 'NEACHITAT'}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
+                        <div>
+                          <p className="text-[10px] uppercase font-bold text-slate-400">Total Comenzi</p>
+                          <p className="text-lg font-mono font-bold">{storeOrders.length}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase font-bold text-slate-400">Valoare Gen.</p>
+                          <p className="text-lg font-mono font-bold text-jss-green-primary">{totalValue.toLocaleString()} RON</p>
                         </div>
                       </div>
-                      
-                      {storeOrders.some(o => o.observations) && (
-                        <div className="p-4 bg-jss-beige/30 border-t border-slate-100">
-                          <p className="text-[10px] font-bold uppercase text-slate-400 mb-2">Observații Recente</p>
-                          <div className="grid gap-2">
-                            {storeOrders.filter(o => o.observations).slice(-2).map(o => (
-                              <div key={o.id} className="text-[10px] flex gap-2">
-                                <span className="font-bold min-w-[40px]">#{o.orderNumber}:</span>
-                                <span className="italic">"{o.observations}"</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </motion.div>
-                  );
-                })
-              )}
+
+                      <div className="pt-2">
+                        <p className="text-[9px] text-slate-400 flex items-center gap-1">
+                          <Clock size={10} /> Ultima comandă: {lastOrder ? lastOrder.deliveryDate?.toDate().toLocaleDateString('ro-RO') : 'Nicio comandă'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="p-4 bg-jss-beige/20">
+                      <button 
+                        onClick={() => setIsAddingOrder(store.id)}
+                        className="w-full bg-white border border-jss-green-primary text-jss-green-primary py-3 rounded-2xl text-xs font-bold hover:bg-jss-green-primary hover:text-white transition-all flex items-center justify-center gap-2"
+                      >
+                        <Plus size={16} /> Înregistrare Livrare
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
+            {stores.length === 0 && (
+              <p className="p-20 text-center text-slate-300 italic border-2 border-dashed border-slate-100 rounded-3xl">
+                Nu ai nicio locație parteneră înregistrată.
+              </p>
+            )}
           </div>
         )}
 
         {activeTab === 'store_orders' && (
           <div className="space-y-8">
-            <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Comenzi Magazine</h2>
-                <p className="text-xs text-jss-muted mt-1">Gestiunea activă a comenzilor și urmărirea statusului de plată</p>
+                <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Centralizator Comenzi</h2>
+                <p className="text-sm text-jss-muted mt-1">Status plati si livrari consolidate</p>
               </div>
               <div className="flex gap-3">
-                <div className="bg-white px-4 py-2 rounded-xl border border-jss-green-primary/10 shadow-sm">
-                  <p className="text-[10px] font-bold text-jss-muted uppercase">Comenzi în derulare</p>
-                  <p className="text-lg font-bold text-jss-green-primary leading-none mt-1">
-                    {orders.filter(o => !o.paid).length} Active
+                <div className="bg-white px-4 py-2 rounded-2xl border border-jss-green-primary/10 shadow-sm min-w-[120px]">
+                  <p className="text-[10px] font-bold text-jss-muted uppercase">În derulare</p>
+                  <p className="text-xl font-bold text-jss-green-primary">
+                    {orders.filter(o => !o.paid).length}
                   </p>
                 </div>
-                <div className="bg-red-50 px-4 py-2 rounded-xl border border-red-100 shadow-sm">
-                  <p className="text-[10px] font-bold text-red-400 uppercase">Facturi Scadente</p>
-                  <p className="text-lg font-bold text-red-500 leading-none mt-1">
-                    {orders.filter(o => !o.paid && o.dueDate?.toDate() < new Date()).length} Alertă
+                <div className="bg-red-50 px-4 py-2 rounded-2xl border border-red-100 shadow-sm min-w-[120px]">
+                  <p className="text-[10px] font-bold text-red-400 uppercase">Scadente</p>
+                  <p className="text-xl font-bold text-red-500">
+                    {orders.filter(o => !o.paid && o.dueDate?.toDate() < new Date()).length}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {orders.length === 0 ? (
-                <div className="bg-white rounded-3xl p-20 text-center border-2 border-dashed border-jss-beige animate-in fade-in">
+                <div className="col-span-full bg-white rounded-3xl p-20 text-center border-2 border-dashed border-jss-beige animate-in fade-in">
                   <div className="bg-jss-beige w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-jss-muted">
                     <Package size={32} />
                   </div>
                   <h3 className="text-lg font-serif font-bold text-jss-green-primary">Nu sunt comenzi înregistrate</h3>
-                  <p className="text-sm text-jss-muted max-w-xs mx-auto mt-2 italic">După ce vei înregistra o livrare în secțiunea "Magazine Partenere", datele vor apărea aici pentru monitorizare.</p>
+                  <p className="text-sm text-jss-muted max-w-xs mx-auto mt-2 italic">Datele vor apărea aici imediat ce înregistrezi prima livrare.</p>
                 </div>
               ) : (
                 orders
-                  .sort((a, b) => b.deliveryDate?.toDate() - a.deliveryDate?.toDate())
+                  .sort((a, b) => {
+                    const dateA = a.deliveryDate?.toDate() || 0;
+                    const dateB = b.deliveryDate?.toDate() || 0;
+                    return dateB - dateA;
+                  })
                   .map((order) => {
                     const store = stores.find(s => s.id === order.storeId);
                     const isOverdue = !order.paid && order.dueDate?.toDate() < new Date();
@@ -835,102 +910,73 @@ export default function FarmerDashboard({ user }: { user: any }) {
                       <motion.div 
                         layout
                         key={order.id}
-                        className={`bg-white rounded-2xl border ${isOverdue ? 'border-red-200' : 'border-jss-green-primary/10'} shadow-sm hover:shadow-md transition-all overflow-hidden`}
+                        className={`bg-white rounded-3xl border ${isOverdue ? 'border-red-200 ring-2 ring-red-50' : 'border-jss-green-primary/10'} shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col`}
                       >
-                        <div className={`p-4 ${isOverdue ? 'bg-red-50/30' : 'bg-slate-50/30'} border-b flex flex-wrap justify-between items-center gap-4`}>
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-jss-green-primary text-white'}`}>
-                              <Store size={18} />
+                        <div className="p-5 flex-1 space-y-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 rounded-xl ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-jss-green-primary/10 text-jss-green-primary'}`}>
+                                <Store size={18} />
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-sm text-jss-green-dark">{store?.name || 'Magazin Extern'}</h4>
+                                <p className="text-[10px] text-slate-400 font-mono tracking-wider">
+                                  #{order.orderNumber}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <h4 className="font-bold text-sm text-jss-green-dark">{store?.name || 'Magazin Extern'}</h4>
-                              <p className="text-[10px] opacity-50 uppercase font-bold tracking-wider">
-                                Order #{order.orderNumber} • Fact {order.invoiceNumber}
-                              </p>
-                            </div>
+                            <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${
+                              order.paid ? 'bg-green-100 text-green-700' : 
+                              isOverdue ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {order.paid ? 'ACHITAT' : isOverdue ? 'SCADENT' : 'NEACHITAT'}
+                            </span>
                           </div>
-                          
-                          <div className="flex items-center gap-4">
-                            <div className="text-right">
-                              <p className="text-[10px] text-jss-muted font-bold uppercase">Data Livrării</p>
-                              <p className="text-xs font-mono font-bold">
-                                {order.deliveryDate?.toDate().toLocaleDateString('ro-RO')}
-                              </p>
-                            </div>
-                            <div className="h-8 w-px bg-slate-200 hidden sm:block" />
-                            <div className="text-right">
-                              <p className="text-[10px] text-jss-muted font-bold uppercase tracking-tight">Status Livrare</p>
-                              <span className="text-[9px] font-bold px-2 py-0.5 bg-green-100 text-green-700 rounded-full">LIVRAT</span>
-                            </div>
-                          </div>
-                        </div>
 
-                        <div className="p-5 grid md:grid-cols-4 gap-6">
-                          <div>
-                            <p className="data-tag">Produs și Detalii</p>
-                            <p className="text-sm font-bold text-jss-green-primary">{order.productName}</p>
-                            <p className="text-xs text-jss-muted mt-0.5">
-                              {order.quantity} KG x {order.pricePerKg} RON/KG
-                            </p>
+                          <div className="flex items-center justify-between py-3 border-y border-slate-50">
+                             <div>
+                               <p className="text-[10px] text-slate-400 uppercase font-bold">Produs</p>
+                               <p className="text-sm font-bold">{order.productName}</p>
+                             </div>
+                             <div className="text-right">
+                               <p className="text-[10px] text-slate-400 uppercase font-bold">Valoare</p>
+                               <p className="text-sm font-mono font-bold text-jss-green-primary">{order.totalAmount.toLocaleString()} RON</p>
+                             </div>
                           </div>
-                          
-                          <div>
-                            <p className="data-tag">Plată și Scadență</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-xs font-bold px-2 py-1 bg-slate-100 rounded text-slate-600">
-                                {order.paymentMethod === 'cash' ? '💵 Cash la Livrare' : '⏳ Termen de Plată'}
-                              </span>
-                            </div>
+
+                          <div className="flex justify-between items-center text-[10px]">
+                            <p className="font-medium text-slate-400 flex items-center gap-1">
+                              <Calendar size={12} /> {order.deliveryDate?.toDate().toLocaleDateString('ro-RO')}
+                            </p>
                             {order.dueDate && (
-                              <p className={`text-[10px] mt-2 flex items-center gap-1 font-bold ${isOverdue ? 'text-red-500' : 'text-slate-400'}`}>
-                                <Clock size={10} /> Scadență: {order.dueDate.toDate().toLocaleDateString('ro-RO')}
-                                {isOverdue && <span className="animate-pulse">(!ÎNTÂRZIERE!)</span>}
+                              <p className={`font-bold flex items-center gap-1 ${isOverdue ? 'text-red-500' : 'text-slate-500'}`}>
+                                <Clock size={12} /> {order.dueDate.toDate().toLocaleDateString('ro-RO')}
                               </p>
                             )}
                           </div>
+                        </div>
 
-                          <div className="md:border-l md:pl-6">
-                            <p className="data-tag">Valoare Factură</p>
-                            <p className="text-xl font-mono font-bold text-jss-green-dark">
-                              {order.totalAmount.toLocaleString()} RON
-                            </p>
-                            <p className="text-[9px] text-jss-muted uppercase font-bold mt-1">TVA Inclus</p>
-                          </div>
-
-                          <div className="flex flex-col justify-center space-y-2">
-                             <button
-                               onClick={async () => {
-                                 // We need handleToggleOrderPayment or similar in FarmerDashboard or import from lib
-                                 // For now I'll use simple setDoc/updateDoc logic directly if available or create a local handler
-                                 try {
-                                   await updateDoc(doc(db, 'orders', order.id), { paid: !order.paid });
-                                 } catch (err) {
-                                   console.error(err);
-                                 }
-                               }}
-                               className={`w-full py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${
-                                 order.paid 
-                                 ? 'bg-green-600 text-white hover:bg-green-700' 
-                                 : 'bg-white border-2 border-slate-200 text-slate-500 hover:border-jss-green-primary hover:text-jss-green-primary'
-                               }`}
-                             >
-                               {order.paid ? (
-                                 <><CheckCircle size={14} /> Achitat Complet</>
-                               ) : (
-                                 <><Clock size={14} /> Marcare ca Achitat</>
-                               )}
-                             </button>
-                             
-                             {order.observations && (
-                               <div className="p-2 bg-jss-beige/50 rounded-lg text-[10px] italic text-jss-muted border border-jss-beige">
-                                 " {order.observations} "
-                               </div>
-                             )}
-                          </div>
+                        <div className="px-5 py-3 bg-slate-50 border-t flex items-center justify-between">
+                           <span className="text-[10px] font-bold text-slate-400 uppercase">
+                             {order.paymentMethod === 'cash' ? '💵 Cash' : '⏳ Termen'}
+                           </span>
+                           <button
+                             onClick={async () => {
+                               try {
+                                 const orderRef = doc(db, 'orders', order.id);
+                                 await updateDoc(orderRef, { paid: !order.paid });
+                               } catch (err) {
+                                  console.error(err);
+                               }
+                             }}
+                             className="text-[10px] font-bold text-jss-green-primary hover:underline"
+                           >
+                             {order.paid ? 'Setează Neachitat' : 'Marchează Achitat'}
+                           </button>
                         </div>
                       </motion.div>
                     );
-                })
+                  })
               )}
             </div>
           </div>
@@ -1049,47 +1095,112 @@ export default function FarmerDashboard({ user }: { user: any }) {
 
         {activeTab === 'opportunities' && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Oportunități Parteneriat</h2>
+            <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Oportunități de Vânzare</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {potentialStores.map((store) => (
+              {farmerOpportunities.map((opp) => (
                 <motion.div 
                   layout
-                  key={store.id}
+                  key={opp.id}
                   className="bg-white overflow-hidden rounded-2xl border border-jss-green-primary/10 shadow-sm h-full flex flex-col"
                 >
                   <div className="bg-jss-green-primary/5 p-4 flex justify-between items-center border-b border-jss-green-primary/10">
-                    <span className="text-[10px] uppercase tracking-widest font-bold bg-jss-green-primary text-white px-2 py-0.5 rounded">
-                      {store.type}
+                    <span className={`text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 rounded ${
+                      opp.status === 'Castigat' ? 'bg-green-500 text-white' :
+                      opp.status === 'Pierdut' ? 'bg-red-500 text-white' :
+                      opp.status === 'Oferta trimisa' ? 'bg-blue-500 text-white' :
+                      opp.status === 'In discutie' ? 'bg-amber-500 text-white' :
+                      'bg-slate-500 text-white'
+                    }`}>
+                      {opp.status}
                     </span>
-                    <MapPin size={16} className="text-jss-muted/50" />
+                    <p className="text-[10px] font-bold text-jss-green-primary">
+                      {opp.estimatedValue ? `${opp.estimatedValue.toLocaleString()} RON` : '---'}
+                    </p>
                   </div>
                   <div className="p-6 flex-1 space-y-4">
-                    <h3 className="text-xl font-serif font-bold text-jss-green-primary">{store.name}</h3>
-                    <p className="text-xs text-jss-muted">{store.city || 'București'}</p>
-                    <a 
-                      href={store.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-jss-green-primary font-bold text-sm hover:underline"
-                    >
-                      Vizitează Site <ChevronRight size={16} />
-                    </a>
+                    <h3 className="text-xl font-serif font-bold text-jss-green-primary">{opp.storeName}</h3>
+                    <div className="space-y-2">
+                       <div className="flex items-center gap-2 text-xs">
+                         <span className="font-bold text-slate-400">Ultima Acțiune:</span>
+                         <span className="text-slate-600">{opp.lastAction || 'În analiză'}</span>
+                       </div>
+                       <div className="flex items-center gap-2 text-xs">
+                         <span className="font-bold text-slate-400">Următorul Pas:</span>
+                         <span className="text-slate-600 font-medium">{opp.nextStep || 'Stabilire contact'}</span>
+                       </div>
+                    </div>
+                    {opp.note && (
+                      <div className="p-3 bg-jss-beige/30 rounded-xl text-[10px] italic text-jss-muted border border-jss-beige">
+                        "{opp.note}"
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               ))}
             </div>
-            {potentialStores.length === 0 && (
+
+            {/* Leads Section */}
+            <div className="pt-8 border-t border-jss-green-primary/10">
+              <h3 className="text-lg font-serif font-bold text-jss-green-dark mb-4">Magazine Vizate (Leads)</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {potentialStores.map((store) => (
+                  <div key={store.id} className="bg-white p-4 rounded-2xl border border-jss-green-primary/10 shadow-sm flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-jss-green-primary">{store.name}</p>
+                      <p className="text-[10px] text-jss-muted">{store.city || 'București'} • {store.type}</p>
+                    </div>
+                    <a href={store.website} target="_blank" className="p-2 text-jss-green-primary hover:bg-jss-beige rounded-lg">
+                      <ExternalLink size={16} />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {farmerOpportunities.length === 0 && potentialStores.length === 0 && (
               <p className="p-10 text-center bg-white rounded-xl border border-dashed border-slate-200 text-slate-400 italic">
-                Nu sunt oportunități active în listă. Administratorul va încărca partenerii noi în curând.
+                Echipa noastră pregătește noi oportunități în acest moment.
               </p>
             )}
           </div>
         )}
 
         {activeTab === 'messages' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-serif font-bold text-jss-green-primary">Contact Departamentul de Vânzări</h2>
-            <MessagingSystem user={user} isAdmin={false} />
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <a href="tel:0712345678" className="bg-white p-6 rounded-3xl border border-jss-green-primary/10 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div className="bg-jss-green-primary/10 p-3 rounded-2xl text-jss-green-primary">
+                  <Phone size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-jss-muted uppercase">Telefon Direct</p>
+                  <p className="font-bold">0721 345 678</p>
+                </div>
+              </a>
+              <a href="mailto:vanzari@jss.ro" className="bg-white p-6 rounded-3xl border border-jss-green-primary/10 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div className="bg-blue-50 p-3 rounded-2xl text-blue-600">
+                  <Mail size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-jss-muted uppercase">Email Departament</p>
+                  <p className="font-bold">vanzari@jss.ro</p>
+                </div>
+              </a>
+              <div className="bg-white p-6 rounded-3xl border border-jss-green-primary/10 shadow-sm flex items-center gap-4">
+                <div className="bg-amber-50 p-3 rounded-2xl text-amber-600">
+                  <Clock size={24} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-jss-muted uppercase">Program Suport</p>
+                  <p className="font-bold">L-V: 09:00 - 18:00</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-xl font-serif font-bold text-jss-green-primary">Trimite un mesaj rapid</h3>
+              <MessagingSystem user={user} isAdmin={false} />
+            </div>
           </div>
         )}
       </main>

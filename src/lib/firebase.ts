@@ -37,6 +37,12 @@ export interface Product {
   paymentReceived?: boolean;
   partnerStoreId?: string;
   createdAt: Timestamp;
+  additionalInfo?: string;
+  // Sales Department fields
+  autoLabels?: string[]; // 'se vinde bine', 'miscare lenta', 'necesita promovare', 'stoc mare', 'stoc mic'
+  manualLabels?: string[]; // 'produs promovat', 'produs prioritar'
+  stockAlert?: string; // 'stoc mic', 'stoc mare', 'risc de nevandut'
+  recommendation?: string;
 }
 
 export interface PartnerStore {
@@ -50,6 +56,11 @@ export interface PartnerStore {
   contactPerson?: string;
   phone?: string;
   addedByFarmerId?: string; // Track who added it
+  // Sales Department fields
+  relationshipStatus?: 'activ' | 'in negociere' | 'inactiv';
+  priority?: 'high' | 'medium' | 'low';
+  internalNotes?: string;
+  lastContactedAt?: Timestamp;
 }
 
 export interface Order {
@@ -68,6 +79,34 @@ export interface Order {
   storeId: string;
   farmerId: string;
   farmName: string;
+  createdAt: Timestamp;
+  // Sales Department fields
+  status: 'noua' | 'confirmata' | 'livrata' | 'finalizata';
+}
+
+export interface Opportunity {
+  id: string;
+  farmerId: string;
+  storeName: string;
+  storeType: string;
+  status: 'Nou' | 'In discutie' | 'Oferta trimisa' | 'Castigat' | 'Pierdut';
+  estimatedValue?: number;
+  targetProducts: string[];
+  lastAction?: string;
+  nextStep?: string;
+  note?: string;
+  internalNotes?: string;
+  nextFollowUpDate?: Timestamp;
+  createdAt: Timestamp;
+}
+
+export interface TeamActivity {
+  id: string;
+  farmerId: string;
+  type: 'call' | 'email' | 'visit' | 'offer' | 'acquisition';
+  storeName: string;
+  result: string;
+  notes: string;
   createdAt: Timestamp;
 }
 

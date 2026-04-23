@@ -85,6 +85,28 @@ service cloud.firestore {
              data.keys().size() <= 10;
     }
 
+    function isValidOpportunity(data) {
+      return data.storeName is string && data.storeName.size() >= 2 && data.storeName.size() <= 200 &&
+             data.status in ['Negociere', 'Oferta trimisa', 'Castigat', 'Contactat'] &&
+             data.estimatedValue is number && data.estimatedValue >= 0 &&
+             data.targetProducts is list && data.targetProducts.size() <= 20 &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
+             (!('lastAction' in data) || (data.lastAction is string && data.lastAction.size() <= 500)) &&
+             data.keys().hasAll(['storeName', 'status', 'estimatedValue', 'targetProducts']) &&
+             data.keys().size() <= 12;
+    }
+
+    function isValidTeamActivity(data) {
+      return data.type in ['call', 'visit', 'offer'] &&
+             data.storeName is string && data.storeName.size() <= 200 &&
+             data.agentName is string && data.agentName.size() <= 100 &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
+             (!('result' in data) || (data.result is string && data.result.size() <= 1000)) &&
+             data.createdAt == request.time &&
+             data.keys().hasAll(['type', 'storeName', 'agentName', 'createdAt']) &&
+             data.keys().size() <= 8;
+    }
+
     function isValidMessage(data) {
       return data.senderId == request.auth.uid &&
              data.senderName is string && data.senderName.size() <= 100 &&
@@ -167,6 +189,18 @@ service cloud.firestore {
     match /potentialPartners/{partnerId} {
       allow read: if isSignedIn();
       allow write: if isAdmin() && isValidPotentialPartner(incoming()) && isValidId(partnerId);
+    }
+
+    match /opportunities/{opportunityId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidOpportunity(incoming()) && isValidId(opportunityId);
+    }
+
+    match /teamActivities/{activityId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && (isAdmin() || resource.data.farmerId == request.auth.uid);
+      allow create: if (isAdmin() || isSignedIn()) && isValidTeamActivity(incoming()) && isValidId(activityId);
+      allow delete: if isAdmin();
     }
   }
 }

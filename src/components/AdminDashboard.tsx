@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Package, Store, Plus, Search, Trash2, CheckCircle, Clock, ExternalLink, LogOut, LayoutDashboard, MapPin, MessageSquare, ClipboardPaste } from 'lucide-react';
+import { Users, Package, Store, Plus, Search, Trash2, CheckCircle, Clock, ExternalLink, LogOut, LayoutDashboard, MapPin, MessageSquare, ClipboardPaste, Star, Phone, Calendar, AlertTriangle } from 'lucide-react';
 import { db, logout, handleFirestoreError } from '../lib/firebase';
 import { collection, onSnapshot, query, addDoc, updateDoc, doc, deleteDoc, serverTimestamp, where } from 'firebase/firestore';
 
@@ -8,12 +8,14 @@ import { POTENTIAL_PARTNERS } from '../constants/potentialPartners';
 import MessagingSystem from './MessagingSystem';
 
 export default function AdminDashboard({ user }: { user: any }) {
-  const [activeView, setActiveView] = useState<'overview' | 'partners' | 'potential' | 'farms' | 'messages'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'partners' | 'potential' | 'farms' | 'messages' | 'opportunities' | 'team'>('overview');
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [partnerStores, setPartnerStores] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [potentialStores, setPotentialStores] = useState<any[]>([]);
   const [farmers, setFarmers] = useState<any[]>([]);
+  const [opportunities, setOpportunities] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
   const [isAddingStore, setIsAddingStore] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -63,12 +65,22 @@ export default function AdminDashboard({ user }: { user: any }) {
       setOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    const unsubOpps = onSnapshot(collection(db, 'opportunities'), (snapshot) => {
+      setOpportunities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    const unsubActivities = onSnapshot(collection(db, 'teamActivities'), (snapshot) => {
+      setActivities(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubProducts();
       unsubPartners();
       unsubPotential();
       unsubFarmers();
       unsubOrders();
+      unsubOpps();
+      unsubActivities();
     };
   }, []);
 
@@ -201,10 +213,11 @@ export default function AdminDashboard({ user }: { user: any }) {
         <aside className={`fixed lg:static inset-y-0 left-0 w-64 border-r border-jss-green-dark/10 p-6 space-y-8 bg-jss-beige-warm z-40 transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <nav className="space-y-4">
             {[
-              { id: 'overview', icon: Package, label: 'Centralizator' },
+              { id: 'overview', icon: Package, label: 'Produse & Analiză' },
               { id: 'farms', icon: CheckCircle, label: 'Ferme Partenere' },
-              { id: 'partners', icon: Store, label: 'Parteneri' },
-              { id: 'potential', icon: Users, label: 'Oportunități' },
+              { id: 'partners', icon: Store, label: 'Magazine Active' },
+              { id: 'opportunities', icon: MapPin, label: 'Conductă Vânzări' },
+              { id: 'team', icon: Users, label: 'Activitate Echipă' },
               { id: 'messages', icon: MessageSquare, label: 'Mesagerie' }
             ].map((btn) => (
               <button 
@@ -238,10 +251,11 @@ export default function AdminDashboard({ user }: { user: any }) {
           {/* Mobile Quick Navigation */}
           <nav className="lg:hidden grid grid-cols-2 sm:grid-cols-3 gap-2 mb-8">
             {[
-              { id: 'overview', icon: Package, label: 'Central.' },
+              { id: 'overview', icon: Package, label: 'Produse' },
               { id: 'farms', icon: CheckCircle, label: 'Ferme' },
-              { id: 'partners', icon: Store, label: 'Parteneri' },
-              { id: 'potential', icon: Users, label: 'Oportun.' },
+              { id: 'partners', icon: Store, label: 'Magazine' },
+              { id: 'opportunities', icon: MapPin, label: 'Lead-uri' },
+              { id: 'team', icon: Users, label: 'Echipă' },
               { id: 'messages', icon: MessageSquare, label: 'Mesaje' }
             ].map((btn) => (
               <button 
@@ -338,13 +352,36 @@ export default function AdminDashboard({ user }: { user: any }) {
                           <td className="p-4 text-xs">
                             {partnerStores.find(s => s.id === p.partnerStoreId)?.name || <span className="opacity-30">---</span>}
                           </td>
-                          <td className="p-4">
-                            <button 
-                              onClick={() => handleTogglePayment(p.id, p.paymentReceived)}
-                              className={`text-[9px] font-bold px-2 py-1 rounded transition-all ${p.paymentReceived ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
-                            >
-                              {p.paymentReceived ? 'APROBAT' : 'ÎN AȘTEPTARE'}
-                            </button>
+                          <td className="p-4 text-right">
+                             <div className="flex items-center justify-end gap-2">
+                                <button 
+                                  onClick={() => handleTogglePayment(p.id, p.paymentReceived)}
+                                  className={`text-[9px] font-bold px-2 py-1 rounded transition-all ${p.paymentReceived ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
+                                >
+                                  {p.paymentReceived ? 'APROBAT' : 'ÎN AȘTEPTARE'}
+                                </button>
+                                
+                                <button 
+                                  onClick={() => {
+                                    const labels = p.manualLabels || [];
+                                    const isTop = labels.includes('Top Vânzări');
+                                    const newLabels = isTop ? labels.filter(l => l !== 'Top Vânzări') : [...labels, 'Top Vânzări'];
+                                    updateDoc(doc(db, 'products', p.id), { manualLabels: newLabels });
+                                  }}
+                                  className={`p-1.5 rounded bg-jss-beige text-jss-green-primary hover:bg-jss-green-primary/10 ${p.manualLabels?.includes('Top Vânzări') ? 'ring-2 ring-jss-green-primary' : ''}`}
+                                  title="Marchează Top Vânzări"
+                                >
+                                  <Star size={14} fill={p.manualLabels?.includes('Top Vânzări') ? 'currentColor' : 'none'} />
+                                </button>
+
+                                <button 
+                                  onClick={() => updateDoc(doc(db, 'products', p.id), { stockAlert: !p.stockAlert })}
+                                  className={`p-1.5 rounded ${p.stockAlert ? 'bg-red-100 text-red-600' : 'bg-jss-beige text-jss-muted'} hover:bg-red-50`}
+                                  title="Alertă Stoc Forțată"
+                                >
+                                  <AlertTriangle size={14} />
+                                </button>
+                             </div>
                           </td>
                         </tr>
                       ))}
@@ -381,7 +418,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                       </div>
                       
                       {farmerProducts.length > 0 ? (
-                        <div className="p-0 overflow-x-auto">
+                        <div className="p-0 overflow-x-auto border-b border-slate-100">
                           <table className="w-full text-left min-w-[700px]">
                             <thead className="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-bold text-slate-400">
                               <tr>
@@ -398,13 +435,28 @@ export default function AdminDashboard({ user }: { user: any }) {
                               {farmerProducts.map((p) => (
                                 <tr key={p.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors text-xs">
                                   <td className="p-4">
-                                    <div className="font-bold text-jss-green-primary">{p.type}</div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="font-bold text-jss-green-primary">{p.type}</div>
+                                      {p.isTopSelection && <Star size={12} className="fill-amber-400 text-amber-400" />}
+                                      {p.forceAlert && <AlertTriangle size={12} className="text-red-500" />}
+                                    </div>
                                     <div className="text-[9px] uppercase font-bold text-slate-400">{p.certification}</div>
-                                    {p.additionalInfo && (
-                                      <p className="mt-1 text-[9px] text-slate-500 italic bg-jss-beige/30 p-1 rounded">
-                                        Note: {p.additionalInfo}
-                                      </p>
-                                    )}
+                                    <div className="flex gap-1 mt-1">
+                                      <button 
+                                        onClick={() => updateDoc(doc(db, 'products', p.id), { isTopSelection: !p.isTopSelection })}
+                                        className={`p-1 rounded ${p.isTopSelection ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}
+                                        title="Top Vânzări"
+                                      >
+                                        <Star size={10} />
+                                      </button>
+                                      <button 
+                                        onClick={() => updateDoc(doc(db, 'products', p.id), { forceAlert: !p.forceAlert })}
+                                        className={`p-1 rounded ${p.forceAlert ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400'}`}
+                                        title="Alertă Stoc Forțată"
+                                      >
+                                        <AlertTriangle size={10} />
+                                      </button>
+                                    </div>
                                   </td>
                                   <td className="p-4 font-mono font-bold">{p.quantity} KG/L</td>
                                   <td className="p-4 font-bold">{p.pricePerKg} RON</td>
@@ -428,10 +480,140 @@ export default function AdminDashboard({ user }: { user: any }) {
                           </table>
                         </div>
                       ) : (
-                        <div className="p-12 text-center text-slate-400 italic text-sm">
+                        <div className="p-8 text-center text-slate-400 italic text-sm border-b border-slate-100">
                           Această fermă nu are încă produse listate.
                         </div>
                       )}
+
+                      {/* Sales Management Panel */}
+                      <div className="p-6 bg-slate-50/50 space-y-6">
+                        <div className="flex items-center gap-2 mb-2">
+                           <BarChart3 size={18} className="text-jss-green-primary" />
+                           <h4 className="text-sm font-serif font-bold text-jss-green-dark uppercase tracking-wider">Management Vânzări & Rezultate</h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                           <div className="space-y-4">
+                              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                                 <div>
+                                   <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Recomandare Echipa Vânzări</label>
+                                   <textarea 
+                                     defaultValue={farmer.salesRecommendation || ''}
+                                     onBlur={(e) => updateDoc(doc(db, 'users', farmer.uid), { salesRecommendation: e.target.value })}
+                                     className="w-full text-sm border border-slate-100 rounded-xl p-3 bg-slate-50 focus:bg-white focus:ring-1 focus:ring-jss-green-primary outline-none transition-all placeholder:italic"
+                                     placeholder="Ex: Produsul X se vinde bine, recomandăm creșterea producției..."
+                                     rows={3}
+                                   />
+                                 </div>
+                                 <div>
+                                   <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Top Produse (Manual)</label>
+                                   <input 
+                                     type="text"
+                                     defaultValue={farmer.topProducts?.join(', ') || ''}
+                                     onBlur={(e) => updateDoc(doc(db, 'users', farmer.uid), { topProducts: e.target.value.split(',').map(s => s.trim()).filter(s => s) })}
+                                     className="w-full text-sm border border-slate-100 rounded-lg px-3 py-2 bg-slate-50 outline-none focus:bg-white"
+                                     placeholder="Produs 1, Produs 2, Produs 3"
+                                   />
+                                 </div>
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                       <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Vânzări Luna (RON)</label>
+                                       <input 
+                                         type="number"
+                                         defaultValue={farmer.manualStats?.totalSales}
+                                         onBlur={(e) => updateDoc(doc(db, 'users', farmer.uid), { 'manualStats.totalSales': Number(e.target.value) })}
+                                         className="w-full text-sm font-mono border border-slate-100 rounded-lg px-3 py-2 bg-slate-50"
+                                       />
+                                    </div>
+                                    <div>
+                                       <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Nr. Comenzi</label>
+                                       <input 
+                                         type="number"
+                                         defaultValue={farmer.manualStats?.ordersCount}
+                                         onBlur={(e) => updateDoc(doc(db, 'users', farmer.uid), { 'manualStats.ordersCount': Number(e.target.value) })}
+                                         className="w-full text-sm font-mono border border-slate-100 rounded-lg px-3 py-2 bg-slate-50"
+                                       />
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+
+                           <div className="space-y-4">
+                              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-3">Acțiuni Rapide</p>
+                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <button 
+                                      onClick={() => {
+                                        const note = prompt("Descrie acțiunea (ex: Apel ofertă, Vizită magazin):");
+                                        if (note) {
+                                          addDoc(collection(db, 'teamActivities'), {
+                                            type: note.toLowerCase().includes('apel') ? 'call' : note.toLowerCase().includes('ofert') ? 'offer' : 'visit',
+                                            storeName: 'Magazin Client',
+                                            agentName: 'Echipa JSS',
+                                            notes: note,
+                                            farmerId: farmer.uid,
+                                            createdAt: serverTimestamp()
+                                          });
+                                        }
+                                      }}
+                                      className="flex items-center justify-center gap-2 bg-jss-green-primary/10 text-jss-green-primary py-2.5 rounded-xl text-[10px] font-bold uppercase hover:bg-jss-green-primary hover:text-white transition-all"
+                                    >
+                                       <Plus size={14} /> Log Activitate
+                                    </button>
+                                    <button 
+                                      onClick={() => {
+                                        const store = prompt("Nume Magazin Oportunitate:");
+                                        if (store) {
+                                          addDoc(collection(db, 'opportunities'), {
+                                            storeName: store,
+                                            status: 'Contactat',
+                                            estimatedValue: 0,
+                                            targetProducts: [],
+                                            farmerId: farmer.uid,
+                                            lastAction: 'Adăugat din panoul de gestiune fermă',
+                                            nextStepDate: serverTimestamp(),
+                                            createdAt: serverTimestamp()
+                                          });
+                                        }
+                                      }}
+                                      className="flex items-center justify-center gap-2 bg-blue-50 text-blue-600 py-2.5 rounded-xl text-[10px] font-bold uppercase hover:bg-blue-600 hover:text-white transition-all"
+                                    >
+                                       <Plus size={14} /> Oportunitate Nouă
+                                    </button>
+                                 </div>
+                                 <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-3 gap-2">
+                                    <div className="text-center">
+                                       <p className="text-[8px] font-bold text-slate-400 uppercase">Opp Actie</p>
+                                       <input 
+                                         type="number"
+                                         defaultValue={farmer.manualStats?.oppsCount}
+                                         onBlur={(e) => updateDoc(doc(db, 'users', farmer.uid), { 'manualStats.oppsCount': Number(e.target.value) })}
+                                         className="w-full text-center text-xs font-bold border-b border-transparent focus:border-jss-green-primary outline-none"
+                                       />
+                                    </div>
+                                    <div className="text-center">
+                                       <p className="text-[8px] font-bold text-slate-400 uppercase">Mag. Cont.</p>
+                                       <input 
+                                         type="number"
+                                         defaultValue={farmer.manualStats?.contactedStores}
+                                         onBlur={(e) => updateDoc(doc(db, 'users', farmer.uid), { 'manualStats.contactedStores': Number(e.target.value) })}
+                                         className="w-full text-center text-xs font-bold border-b border-transparent focus:border-jss-green-primary outline-none"
+                                       />
+                                    </div>
+                                    <div className="text-center">
+                                       <p className="text-[8px] font-bold text-slate-400 uppercase">Cli. Câșt.</p>
+                                       <input 
+                                         type="number"
+                                         defaultValue={farmer.manualStats?.wonClients}
+                                         onBlur={(e) => updateDoc(doc(db, 'users', farmer.uid), { 'manualStats.wonClients': Number(e.target.value) })}
+                                         className="w-full text-center text-xs font-bold border-b border-transparent focus:border-jss-green-primary outline-none"
+                                       />
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
@@ -480,23 +662,56 @@ export default function AdminDashboard({ user }: { user: any }) {
                             </p>
                           )}
                         </div>
-                        <div className="flex items-center gap-8">
-                          <div className="text-right">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase">Total de încasat</p>
-                            <p className={`text-lg font-mono font-bold ${unpaidAmount > 0 ? 'text-red-500' : 'text-green-600'}`}>
-                              {unpaidAmount.toLocaleString()} RON
-                            </p>
-                          </div>
-                          <button 
-                            onClick={async () => {
-                              if (confirm('Sigur vrei să ștergi acest magazin?')) {
-                                try { await deleteDoc(doc(db, 'partnerStores', store.id)); } catch (err) { console.error(err); }
-                              }
-                            }}
-                            className="text-slate-300 hover:text-red-500 p-2 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                        <div className="flex flex-col items-end gap-3">
+                           <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Status Relație</p>
+                                <select 
+                                  value={store.relationshipStatus || 'activ'}
+                                  onChange={(e) => updateDoc(doc(db, 'partnerStores', store.id), { relationshipStatus: e.target.value })}
+                                  className={`text-[9px] font-bold px-2 py-1 rounded bg-white border border-slate-200 outline-none uppercase cursor-pointer ${
+                                    store.relationshipStatus === 'activ' ? 'text-green-600' : 
+                                    store.relationshipStatus === 'in negociere' ? 'text-amber-600' : 'text-slate-500'
+                                  }`}
+                                >
+                                  <option value="in negociere">În Negociere</option>
+                                  <option value="activ">Activ</option>
+                                  <option value="colaborare incheiata">Încheiată</option>
+                                </select>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Prioritate</p>
+                                <select 
+                                  value={store.priority || 'medie'}
+                                  onChange={(e) => updateDoc(doc(db, 'partnerStores', store.id), { priority: e.target.value })}
+                                  className={`text-[9px] font-bold px-2 py-1 rounded bg-white border border-slate-200 outline-none uppercase cursor-pointer ${
+                                    store.priority === 'mare' ? 'text-red-600 font-black' : 'text-slate-500'
+                                  }`}
+                                >
+                                  <option value="mica">Mică</option>
+                                  <option value="medie">Medie</option>
+                                  <option value="mare">Mare 🔥</option>
+                                </select>
+                              </div>
+                           </div>
+                           <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Total de încasat</p>
+                                <p className={`text-lg font-mono font-bold ${unpaidAmount > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                                  {unpaidAmount.toLocaleString()} RON
+                                </p>
+                              </div>
+                              <button 
+                                onClick={async () => {
+                                  if (confirm('Sigur vrei să ștergi acest magazin?')) {
+                                    try { await deleteDoc(doc(db, 'partnerStores', store.id)); } catch (err) { console.error(err); }
+                                  }
+                                }}
+                                className="text-slate-300 hover:text-red-500 p-2 transition-colors"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                           </div>
                         </div>
                       </div>
 
@@ -576,59 +791,121 @@ export default function AdminDashboard({ user }: { user: any }) {
             </div>
           )}
 
-          {activeView === 'potential' && (
+          {activeView === 'opportunities' && (
             <div className="space-y-6 lg:space-y-8">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
-                  <p className="data-tag">Oportunități Market</p>
-                  <h2 className="text-2xl lg:text-3xl font-serif font-bold text-jss-green-dark">Magazine București</h2>
+                  <p className="data-tag">Lead Management CRM</p>
+                  <h2 className="text-2xl lg:text-3xl font-serif font-bold text-jss-green-dark">Conductă Oportunități</h2>
                 </div>
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                   <button 
                     onClick={() => setIsBulkAdding(true)} 
                     className="flex-1 sm:flex-none bg-jss-beige border border-jss-green-dark/20 text-jss-green-dark rounded-lg px-4 py-2 font-bold text-xs hover:bg-white transition-all shadow-sm"
                   >
-                    <Plus size={16} className="inline mr-1" /> Încărcare Listă Text
+                    <Plus size={16} className="inline mr-1" /> Import Lead-uri
                   </button>
                   <button onClick={() => setIsAddingPotential(true)} className="flex-1 sm:flex-none bg-jss-green-dark text-white rounded-lg px-6 py-2 shadow-lg font-bold text-xs hover:opacity-90">
-                    <Plus size={16} className="inline mr-1" /> Adaugă Individual
+                    <Plus size={16} className="inline mr-1" /> Lead Nou
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(potentialStores.length > 0 ? potentialStores : []).map((store) => (
-                  <div key={store.id} className="bg-white rounded-xl border border-slate-200 p-6 space-y-4 hover:border-jss-green-light transition-all shadow-sm group">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {(opportunities.length > 0 ? opportunities : []).map((opp) => (
+                  <div key={opp.id} className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 hover:border-jss-green-light transition-all shadow-sm group relative">
                     <div className="flex justify-between items-start">
-                      <span className="data-tag !mb-0">{store.type}</span>
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${
+                        opp.status === 'Castigat' ? 'bg-green-100 text-green-700' : 
+                        opp.status === 'Oferta trimisa' ? 'bg-blue-100 text-blue-700' : 
+                        opp.status === 'Negociere' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {opp.status}
+                      </span>
                       <button onClick={async () => {
                         if(confirm('Ștergi această oportunitate?')) {
-                          await deleteDoc(doc(db, 'potentialPartners', store.id));
+                          await deleteDoc(doc(db, 'opportunities', opp.id));
                         }
                       }} className="text-red-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
                         <Trash2 size={16} />
                       </button>
                     </div>
-                    <h3 className="text-xl font-bold font-serif text-jss-green-dark">{store.name}</h3>
-                    <div className="flex items-center gap-2 opacity-50">
-                      <MapPin size={12} />
-                      <span className="text-[10px] font-bold uppercase">{store.city}</span>
+                    
+                    <div>
+                      <h3 className="text-xl font-bold font-serif text-jss-green-dark">{opp.storeName}</h3>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1">{opp.targetProducts.join(', ')}</p>
                     </div>
-                    {store.website && store.website !== '#' ? (
-                      <a href={store.website} target="_blank" rel="noopener noreferrer" className="text-xs text-jss-green-primary flex items-center gap-1 hover:underline">
-                        Site Web <ExternalLink size={12} />
-                      </a>
-                    ) : (
-                      <span className="text-[10px] text-slate-300 italic">Fără website înregistrat</span>
-                    )}
+
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                       <p className="text-[10px] text-slate-400 font-bold uppercase">Valoare Estimatā</p>
+                       <p className="text-lg font-mono font-bold text-jss-green-primary">{opp.estimatedValue.toLocaleString()} RON</p>
+                    </div>
+
+                    <div className="space-y-1">
+                       <p className="text-[9px] text-slate-400 font-bold uppercase">Ultima Acțiune</p>
+                       <p className="text-xs italic text-jss-muted line-clamp-2">"{opp.lastAction}"</p>
+                    </div>
+
+                    <div className="pt-2 flex items-center justify-between border-t border-slate-50">
+                       <div className="flex items-center gap-1.5 opacity-50">
+                         <Calendar size={12} />
+                         <span className="text-[10px] font-bold">Următorul pas: {opp.nextStepDate?.toDate().toLocaleDateString('ro-RO')}</span>
+                       </div>
+                       <button className="p-1 px-2 text-[10px] font-bold text-jss-green-dark hover:underline">Detalii</button>
+                    </div>
                   </div>
                 ))}
               </div>
-              {potentialStores.length === 0 && (
+              {opportunities.length === 0 && (
                 <div className="p-20 text-center border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 italic">
-                  Nu există oportunități în listă. Folosește butonul de "Încărcare Listă Text" pentru a adăuga parteneri prin copy-paste.
+                  Nu există oportunități active în pipeline.
                 </div>
               )}
+            </div>
+          )}
+
+          {activeView === 'team' && (
+            <div className="space-y-8">
+               <div>
+                  <p className="data-tag">Field Activity</p>
+                  <h2 className="text-3xl font-serif font-bold text-jss-green-dark">Log-uri Echipă JSS</h2>
+               </div>
+
+               <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="divide-y divide-slate-50">
+                    {activities.length > 0 ? activities.sort((a,b) => b.createdAt?.toDate() - a.createdAt?.toDate()).map(act => (
+                      <div key={act.id} className="p-6 flex flex-wrap gap-6 items-center hover:bg-slate-50 transition-colors">
+                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                           act.type === 'offer' ? 'bg-blue-50 text-blue-600' : 
+                           act.type === 'call' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'
+                         }`}>
+                           {act.type === 'offer' ? <Plus size={20} /> : 
+                            act.type === 'call' ? <Phone size={20} /> : <Users size={20} />}
+                         </div>
+                         <div className="flex-1 min-w-[200px]">
+                            <p className="text-sm font-bold text-jss-green-dark">{act.storeName}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{act.agentName}</span>
+                               <span className="text-[8px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold uppercase">{act.type}</span>
+                            </div>
+                         </div>
+                         <div className="flex-[2] min-w-[300px]">
+                            <p className="text-xs text-jss-muted italic border-l-2 border-slate-100 pl-4">"{act.notes || act.result}"</p>
+                         </div>
+                         <div className="text-right">
+                            <p className="text-xs font-mono font-bold text-slate-400">
+                               {act.createdAt?.toDate().toLocaleDateString('ro-RO')}
+                            </p>
+                            <p className="text-[10px] font-bold text-slate-300">
+                               {act.createdAt?.toDate().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                         </div>
+                      </div>
+                    )) : (
+                      <div className="p-20 text-center text-slate-300 italic">Nicio activitate înregistrată azi.</div>
+                    )}
+                  </div>
+               </div>
             </div>
           )}
 

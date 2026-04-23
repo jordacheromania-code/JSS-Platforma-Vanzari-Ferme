@@ -9,6 +9,18 @@
         "displayName": { "type": "string" },
         "role": { "type": "string", "enum": ["admin", "farmer"] },
         "farmName": { "type": "string" },
+        "salesRecommendation": { "type": "string" },
+        "topProducts": { "type": "array", "items": { "type": "string" } },
+        "manualStats": {
+          "type": "object",
+          "properties": {
+            "totalSales": { "type": "number" },
+            "ordersCount": { "type": "number" },
+            "oppsCount": { "type": "number" },
+            "contactedStores": { "type": "number" },
+            "wonClients": { "type": "number" }
+          }
+        },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["email", "role", "createdAt"]
@@ -107,6 +119,36 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["senderId", "senderName", "senderRole", "receiverId", "subject", "body", "createdAt"]
+    },
+    "opportunity": {
+      "title": "Sales Opportunity",
+      "description": "A lead or potential partner in the sales pipeline.",
+      "type": "object",
+      "properties": {
+        "storeName": { "type": "string" },
+        "status": { "type": "string", "enum": ["Negociere", "Oferta trimisa", "Castigat", "Contactat"] },
+        "estimatedValue": { "type": "number" },
+        "targetProducts": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string" },
+        "lastAction": { "type": "string" },
+        "nextStepDate": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["storeName", "status", "estimatedValue", "targetProducts"]
+    },
+    "teamActivity": {
+      "title": "Team Activity",
+      "description": "Logs of actions taken by the sales team.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["call", "visit", "offer"] },
+        "storeName": { "type": "string" },
+        "agentName": { "type": "string" },
+        "notes": { "type": "string" },
+        "result": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "storeName", "agentName", "createdAt"]
     }
   },
   "firestore": {
@@ -129,6 +171,14 @@
     "/potentialPartners/{partnerId}": {
       "schema": "potentialPartner",
       "description": "List of profile shops in Bucharest."
+    },
+    "/opportunities/{opportunityId}": {
+      "schema": "opportunity",
+      "description": "Sales pipeline opportunities."
+    },
+    "/teamActivities/{activityId}": {
+      "schema": "teamActivity",
+      "description": "Logs of sales team activities."
     },
     "/messages/{messageId}": {
       "schema": "message",
