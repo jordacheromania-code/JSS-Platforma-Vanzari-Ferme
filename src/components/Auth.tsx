@@ -69,51 +69,41 @@ Sugestie: Dacă folosești Vercel, asigură-te că domeniul este adăugat în Fi
         <div className="mb-8 md:mb-16">
           <h1 className="text-4xl font-bold tracking-tight text-jss-green-light">JSS</h1>
           <p className="text-jss-muted uppercase tracking-widest text-xs font-semibold mt-2">
-            Platforma de Vanzari Produse din Ferme
+            Departamentul de Vânzări
           </p>
         </div>
 
         <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
-          <div className="mb-8">
-            <h2 className="text-3xl font-serif mb-2">Administrator JSS</h2>
-            <p className="text-jss-muted text-sm italic">Gestionare sistem, magazine partener și fluxuri de plată.</p>
+          <div className="mb-8 border-l-4 border-jss-green-light pl-6">
+            <h2 className="text-3xl font-serif mb-2">Administrator</h2>
+            <p className="text-jss-green-light font-bold text-lg">Secțiune dedicată Departamentului de Vânzări JSS</p>
+            <p className="text-jss-muted text-sm mt-4 italic opacity-80">Acces securizat pentru gestionarea ecosistemului de parteneriate și fluxuri comerciale.</p>
           </div>
 
-          <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8 text-center">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-8 mb-8 text-center shadow-2xl backdrop-blur-sm">
             <button
               onClick={() => handleLogin('admin')}
               disabled={!!isLoggingIn}
-              className={`login-btn w-full ${isLoggingIn === 'admin' ? 'opacity-50 cursor-wait' : ''}`}
+              className={`login-btn w-full justify-center !py-4 shadow-xl active:scale-95 transition-all ${isLoggingIn === 'admin' ? 'opacity-50 cursor-wait' : 'hover:bg-jss-green-light hover:text-jss-green-dark'}`}
             >
               {isLoggingIn === 'admin' ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-jss-green-light border-t-transparent rounded-full animate-spin"></div>
-                  Se conectează...
+                  Conectare...
                 </div>
               ) : (
                 <>
                   <LogIn size={20} />
-                  Conectare Administrator
+                  Conectare
                 </>
               )}
             </button>
           </div>
-
-          <div className="grid grid-cols-2 gap-3 opacity-40 grayscale pointer-events-none">
-            <div className="bg-white/5 p-3 rounded">
-              <div className="data-tag text-white/60">Module</div>
-              <div className="text-xs">Nume Ferma / Produse</div>
-            </div>
-            <div className="bg-white/5 p-3 rounded">
-              <div className="data-tag text-white/60">Parteneri</div>
-              <div className="text-xs">Magazin / Cantitati</div>
-            </div>
-          </div>
         </div>
 
-        <div className="text-[10px] text-jss-green-primary mt-auto flex justify-between">
-          <span>© 2024 JSS Romania</span>
-          <span>v1.0.4 - Enterprise</span>
+        <div className="text-[10px] text-jss-green-primary mt-auto flex justify-between uppercase tracking-tighter font-bold opacity-60">
+          <span>© 2024 JSS Romania - Logistică & Distribuție</span>
+          <span>v1.0.4 - Enterprise Edition</span>
         </div>
       </motion.div>
 
@@ -121,60 +111,75 @@ Sugestie: Dacă folosești Vercel, asigură-te că domeniul este adăugat în Fi
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full md:w-1/2 min-h-[50vh] md:h-full flex flex-col p-8 md:p-12 relative"
+        className="w-full md:w-1/2 min-h-[50vh] md:h-full flex flex-col p-8 md:p-12 relative bg-white"
       >
-        <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
-          <div className="mb-8">
-            <h2 className="text-3xl font-serif mb-2 text-jss-green-primary">Fermier</h2>
-            <p className="text-slate-500 text-sm">Gestionează-ți stocurile, prețurile și urmărește încasările din magazine.</p>
+        <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
+          <div className="mb-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-jss-green-primary text-white p-2 rounded-lg">
+                <Tractor size={24} />
+              </div>
+              <h2 className="text-3xl font-serif font-bold text-jss-green-primary">Portal Fermier</h2>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-jss-muted mb-3 italic">Ce înseamnă Departamentul de Vânzări JSS pentru tine?</p>
+                <p className="text-jss-text text-[15px] leading-relaxed border-l-2 border-jss-green-light pl-4 py-1">
+                  Suntem partenerul tău strategic care se ocupă de tot ce ține de piață: identificăm magazinele potrivite, negociem prețurile corecte și asigurăm un flux constant de comenzi, astfel încât tu să te poți concentra pe ceea ce știi mai bine – producția de calitate.
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-jss-muted mb-3 italic">Beneficiile platformei JSS</p>
+                <ul className="grid grid-cols-1 gap-3">
+                  {[
+                    "Acces direct la o rețea premium de magazine și carmangerii",
+                    "Transparență totală asupra livrărilor și statusului plăților",
+                    "Gestiune digitală simplificată a stocurilor și ofertelor",
+                    "Eliminarea birocrației în relația cu magazinele partenere"
+                  ].map((benefit, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm text-jss-text">
+                      <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-jss-green-primary shrink-0" />
+                      {benefit}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
 
-          <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 mb-8">
-            <p className="text-xs text-slate-400 mb-4">Intră în platformă pentru a actualiza oferta de produse.</p>
+          <div className="bg-jss-beige/30 border border-jss-green-primary/10 rounded-2xl p-8 mb-8 shadow-sm">
             <button
               onClick={() => handleLogin('farmer')}
               disabled={!!isLoggingIn}
-              className={`login-btn w-full ${isLoggingIn === 'farmer' ? 'opacity-50 cursor-wait' : ''}`}
+              className={`login-btn w-full justify-center !py-4 shadow-lg active:scale-95 transition-all ${isLoggingIn === 'farmer' ? 'opacity-50 cursor-wait' : 'bg-jss-green-primary hover:bg-jss-green-dark text-white'}`}
             >
               {isLoggingIn === 'farmer' ? (
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-jss-green-primary border-t-transparent rounded-full animate-spin"></div>
-                  Se conectează...
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Conectare...
                 </div>
               ) : (
                 <>
                   <LogIn size={20} />
-                  Conectare Fermier
+                  Conectare
                 </>
               )}
             </button>
-          </div>
-
-          <div className="space-y-4 opacity-50 grayscale pointer-events-none">
-            <div className="border-l-2 border-jss-green-light pl-3">
-              <div className="data-tag">Magazin Potential</div>
-              <div className="text-sm font-medium">Carmangerii & Lactate București</div>
-              <div className="text-[10px] text-slate-400">Lista magazine specializate</div>
-            </div>
-            <div className="flex gap-4">
-              <div className="flex-1 bg-white p-3 rounded border border-slate-100">
-                <div className="data-tag italic">Categorii</div>
-                <div className="text-[10px] flex gap-1"><span>Tip</span>•<span>Kg</span>•<span>Pret</span></div>
-              </div>
-              <div className="flex-1 bg-white p-3 rounded border border-slate-100">
-                <div className="data-tag italic">Financiar</div>
-                <div className="text-[10px] flex gap-1"><span>Plata</span>•<span>Incasat</span></div>
-              </div>
-            </div>
+            <p className="text-[10px] text-center text-jss-muted mt-4 font-medium uppercase tracking-tight">Access securizat bazat pe profilul de producător aprobat</p>
           </div>
         </div>
 
-        <div className="mt-auto flex justify-between items-center text-[11px] text-slate-400 font-medium">
-          <div className="flex gap-4">
-            <span>Termeni și Condiții</span>
-            <span>Asistență Fermieri</span>
+        <div className="mt-auto pt-8 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+          <div className="flex gap-6">
+            <span className="hover:text-jss-green-primary cursor-pointer transition-colors">Termeni de utilizare</span>
+            <span className="hover:text-jss-green-primary cursor-pointer transition-colors">Suport Tehnic JSS</span>
           </div>
-          <div className="w-2 h-2 bg-jss-green-light rounded-full"></div>
+          <div className="flex items-center gap-2">
+             <div className="w-1.5 h-1.5 bg-jss-green-light rounded-full animate-pulse"></div>
+             <span>Sistem Activ</span>
+          </div>
         </div>
       </motion.div>
     </div>
