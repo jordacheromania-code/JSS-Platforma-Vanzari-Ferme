@@ -249,52 +249,59 @@ export default function FarmerDashboard({ user }: { user: any }) {
         </AnimatePresence>
 
       {/* Tab Navigation */}
-      <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-jss-green-primary/10 w-full overflow-x-auto no-scrollbar">
-        <div className="flex min-w-max">
+      <nav className="bg-white p-1 rounded-2xl shadow-sm border border-jss-green-primary/10 w-full mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:flex xl:flex-nowrap items-stretch gap-1">
           <button 
             onClick={() => setActiveTab('products')}
-            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'products' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'products' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
-            Catalog Produse
+            <Package size={18} className="shrink-0" />
+            <span className="leading-tight">Catalog Produse</span>
           </button>
           <button 
             onClick={() => setActiveTab('stocks')}
-            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'stocks' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'} flex items-center gap-2`}
+            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'stocks' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
-            <Boxes size={16} /> Stocuri
+            <Boxes size={18} className="shrink-0" />
+            <span className="leading-tight">Stocuri</span>
           </button>
           <button 
             onClick={() => setActiveTab('partners')}
-            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'partners' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'partners' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
-            Magazine Partenere
+            <Store size={18} className="shrink-0" />
+            <span className="leading-tight">Magazine</span>
           </button>
           <button 
             onClick={() => setActiveTab('store_orders')}
-            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'store_orders' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'store_orders' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
-            Comenzi Magazine
+            <Truck size={18} className="shrink-0" />
+            <span className="leading-tight">Comenzi</span>
           </button>
           <button 
             onClick={() => setActiveTab('ledger')}
-            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'ledger' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'ledger' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
-            Registru
+            <BarChart3 size={18} className="shrink-0" />
+            <span className="leading-tight">Registru</span>
           </button>
           <button 
             onClick={() => setActiveTab('opportunities')}
-            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'opportunities' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
+            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'opportunities' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
-            Oportunități
+            <MapPin size={18} className="shrink-0" />
+            <span className="leading-tight">Oportunități</span>
           </button>
           <button 
             onClick={() => setActiveTab('messages')}
-            className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'messages' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'} flex items-center gap-2`}
+            className={`flex flex-col sm:flex-row items-center justify-center gap-2 px-3 py-3 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center sm:text-left ${activeTab === 'messages' ? 'bg-jss-green-primary text-white shadow-md' : 'text-jss-muted hover:bg-jss-beige'}`}
           >
-            <MessageSquare size={16} /> Contact
+            <MessageSquare size={18} className="shrink-0" />
+            <span className="leading-tight">Contact</span>
           </button>
         </div>
-      </div>
+      </nav>
 
         {activeTab === 'stocks' && (
           <div className="space-y-6">
@@ -663,74 +670,103 @@ export default function FarmerDashboard({ user }: { user: any }) {
                         </div>
                       </div>
 
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left min-w-[1000px]">
-                          <thead>
-                            <tr className="bg-slate-50 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-100">
-                              <th className="p-4">Nr. Comandă / Factură</th>
-                              <th className="p-4">Produs</th>
-                              <th className="p-4">Cant. / Preț</th>
-                              <th className="p-4 text-center">Data Livrării</th>
-                              <th className="p-4 text-center">Data Scadență</th>
-                              <th className="p-4">Tip Plată</th>
-                              <th className="p-4 text-right">Total Factură</th>
-                              <th className="p-4 text-right">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-50">
-                            {storeOrders.map((order) => (
-                              <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
-                                <td className="p-4">
-                                  <p className="text-xs font-bold text-jss-green-primary"># {order.orderNumber}</p>
-                                  <p className="text-[10px] text-slate-400">Fact: {order.invoiceNumber}</p>
-                                </td>
-                                <td className="p-4 text-sm font-medium">{order.productName}</td>
-                                <td className="p-4">
-                                  <p className="text-xs font-mono">{order.quantity} KG</p>
-                                  <p className="text-[9px] text-slate-400">{order.pricePerKg} RON/KG</p>
-                                </td>
-                                <td className="p-4 text-center">
-                                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-lg text-[10px] text-slate-600 font-medium">
-                                    <Clock size={12} />
-                                    {order.deliveryDate?.toDate().toLocaleDateString('ro-RO')}
-                                  </div>
-                                </td>
-                                <td className="p-4 text-center">
-                                  {order.dueDate && (
-                                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium ${
-                                      !order.paid && order.dueDate.toDate() < new Date() ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
-                                    }`}>
+                      {/* Store Deliveries Table / Cards */}
+                      <div className="space-y-0">
+                        {/* Mobile List View */}
+                        <div className="lg:hidden divide-y divide-slate-100">
+                          {storeOrders.map((order) => (
+                            <div key={order.id} className="p-4 space-y-3">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-[10px] font-bold text-slate-400 capitalize">#{order.orderNumber} / {order.deliveryDate?.toDate().toLocaleDateString('ro-RO')}</p>
+                                  <h4 className="text-sm font-bold text-jss-green-dark">{order.productName}</h4>
+                                </div>
+                                <span className={`text-[9px] font-bold px-2 py-1 rounded ${
+                                  order.paid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                }`}>
+                                  {order.paid ? 'ACHITAT' : 'NEACHITAT'}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-end">
+                                <div className="text-[10px] space-y-1">
+                                  <p><span className="opacity-50 uppercase font-bold">Cantitate:</span> {order.quantity} KG</p>
+                                  <p><span className="opacity-50 uppercase font-bold">Scadență:</span> {order.dueDate?.toDate().toLocaleDateString('ro-RO') || '---'}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-xs font-mono font-bold text-jss-green-primary">{order.totalAmount.toLocaleString()} RON</p>
+                                  <p className="text-[9px] text-slate-400 uppercase font-bold">{order.paymentMethod === 'cash' ? 'Cash Livrare' : 'Termen'}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          {storeOrders.length === 0 && (
+                            <div className="p-8 text-center text-slate-300 italic text-xs">Fără livrări înregistrate.</div>
+                          )}
+                        </div>
+
+                        {/* Desktop Table */}
+                        <div className="hidden lg:block overflow-x-auto">
+                          <table className="w-full text-left">
+                            <thead>
+                              <tr className="bg-slate-50 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-100">
+                                <th className="p-4">Nr. Comandă / Factură</th>
+                                <th className="p-4">Produs</th>
+                                <th className="p-4">Cant. / Preț</th>
+                                <th className="p-4 text-center">Data Livrării</th>
+                                <th className="p-4 text-center">Data Scadență</th>
+                                <th className="p-4">Tip Plată</th>
+                                <th className="p-4 text-right">Total Factură</th>
+                                <th className="p-4 text-right">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                              {storeOrders.map((order) => (
+                                <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group">
+                                  <td className="p-4">
+                                    <p className="text-xs font-bold text-jss-green-primary"># {order.orderNumber}</p>
+                                    <p className="text-[10px] text-slate-400">Fact: {order.invoiceNumber}</p>
+                                  </td>
+                                  <td className="p-4 text-sm font-medium">{order.productName}</td>
+                                  <td className="p-4">
+                                    <p className="text-xs font-mono">{order.quantity} KG</p>
+                                    <p className="text-[9px] text-slate-400">{order.pricePerKg} RON/KG</p>
+                                  </td>
+                                  <td className="p-4 text-center">
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-lg text-[10px] text-slate-600 font-medium">
                                       <Clock size={12} />
-                                      {order.dueDate.toDate().toLocaleDateString('ro-RO')}
+                                      {order.deliveryDate?.toDate().toLocaleDateString('ro-RO')}
                                     </div>
-                                  )}
-                                </td>
-                                <td className="p-4">
-                                  <span className="text-[10px] font-bold uppercase text-slate-500">
-                                    {order.paymentMethod === 'cash' ? '💵 Cash Livrare' : '⏳ Termen Plată'}
-                                  </span>
-                                </td>
-                                <td className="p-4 text-right">
-                                  <p className="font-mono font-bold text-sm">{order.totalAmount.toLocaleString()} RON</p>
-                                </td>
-                                <td className="p-4 text-right">
-                                  <span className={`text-[10px] font-bold px-2.5 py-1.5 rounded-lg uppercase ${
-                                    order.paid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                  }`}>
-                                    {order.paid ? 'ACHITAT' : 'NEACHITAT'}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                            {storeOrders.length === 0 && (
-                              <tr>
-                                <td colSpan={8} className="p-12 text-center text-slate-300 italic text-sm">
-                                  Nu există nicio livrare înregistrată pentru acest magazin.
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
+                                  </td>
+                                  <td className="p-4 text-center">
+                                    {order.dueDate && (
+                                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-medium ${
+                                        !order.paid && order.dueDate.toDate() < new Date() ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                                      }`}>
+                                        <Clock size={12} />
+                                        {order.dueDate.toDate().toLocaleDateString('ro-RO')}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="p-4">
+                                    <span className="text-[10px] font-bold uppercase text-slate-500">
+                                      {order.paymentMethod === 'cash' ? '💵 Cash Livrare' : '⏳ Termen Plată'}
+                                    </span>
+                                  </td>
+                                  <td className="p-4 text-right">
+                                    <p className="font-mono font-bold text-sm">{order.totalAmount.toLocaleString()} RON</p>
+                                  </td>
+                                  <td className="p-4 text-right">
+                                    <span className={`text-[10px] font-bold px-2.5 py-1.5 rounded-lg uppercase ${
+                                      order.paid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                    }`}>
+                                      {order.paid ? 'ACHITAT' : 'NEACHITAT'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                       
                       {storeOrders.some(o => o.observations) && (

@@ -235,6 +235,26 @@ export default function AdminDashboard({ user }: { user: any }) {
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 lg:p-8 overflow-y-auto max-w-full">
+          {/* Mobile Quick Navigation */}
+          <nav className="lg:hidden grid grid-cols-2 sm:grid-cols-3 gap-2 mb-8">
+            {[
+              { id: 'overview', icon: Package, label: 'Central.' },
+              { id: 'farms', icon: CheckCircle, label: 'Ferme' },
+              { id: 'partners', icon: Store, label: 'Parteneri' },
+              { id: 'potential', icon: Users, label: 'Oportun.' },
+              { id: 'messages', icon: MessageSquare, label: 'Mesaje' }
+            ].map((btn) => (
+              <button 
+                key={btn.id}
+                onClick={() => setActiveView(btn.id as any)}
+                className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all gap-2 ${activeView === btn.id ? 'bg-jss-green-dark text-white border-jss-green-dark shadow-lg' : 'bg-white text-jss-muted border-slate-200'}`}
+              >
+                <btn.icon size={20} />
+                <span className="text-[10px] font-bold uppercase tracking-tight">{btn.label}</span>
+              </button>
+            ))}
+          </nav>
+
           {activeView === 'overview' && (
             <div className="space-y-6 lg:space-y-8">
               <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4">
@@ -254,44 +274,83 @@ export default function AdminDashboard({ user }: { user: any }) {
                 </div>
               </div>
 
-              {/* Data Table */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
-                <table className="w-full text-left min-w-[700px]">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200">
-                      <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Fermă / Produs</th>
-                      <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Cant. Săpt.</th>
-                      <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Preț Min.</th>
-                      <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Livrare</th>
-                      <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Magazin</th>
-                      <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProducts.map((p) => (
-                      <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                        <td className="p-4">
-                          <p className="font-bold text-sm text-jss-green-dark">{p.farmName || '---'}</p>
+              {/* Data Table / Mobile Cards */}
+              <div className="space-y-4">
+                <div className="lg:hidden space-y-4">
+                  {filteredProducts.map((p) => (
+                    <div key={p.id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-bold text-jss-green-dark">{p.farmName || '---'}</h3>
                           <p className="text-[10px] opacity-60 italic">{p.type} ({p.certification})</p>
-                        </td>
-                        <td className="p-4 text-sm font-mono">{p.quantity} KG</td>
-                        <td className="p-4 text-sm font-bold">{p.pricePerKg} RON</td>
-                        <td className="p-4 text-[10px] capitalize">{p.deliveryFrequency}</td>
-                        <td className="p-4 text-xs">
-                          {partnerStores.find(s => s.id === p.partnerStoreId)?.name || <span className="opacity-30">---</span>}
-                        </td>
-                        <td className="p-4">
-                          <button 
-                            onClick={() => handleTogglePayment(p.id, p.paymentReceived)}
-                            className={`text-[9px] font-bold px-2 py-1 rounded transition-all ${p.paymentReceived ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
-                          >
-                            {p.paymentReceived ? 'APROBAT' : 'ÎN AȘTEPTARE'}
-                          </button>
-                        </td>
+                        </div>
+                        <button 
+                          onClick={() => handleTogglePayment(p.id, p.paymentReceived)}
+                          className={`text-[9px] font-bold px-3 py-1.5 rounded-full transition-all ${p.paymentReceived ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
+                        >
+                          {p.paymentReceived ? 'APROBAT' : 'ÎN AȘTEPTARE'}
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-50">
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Cantitate</p>
+                          <p className="text-xs font-mono font-bold">{p.quantity} KG</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Preț Min.</p>
+                          <p className="text-xs font-bold">{p.pricePerKg} RON</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Livrare</p>
+                          <p className="text-xs capitalize">{p.deliveryFrequency}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Magazin</p>
+                          <p className="text-xs truncate">{partnerStores.find(s => s.id === p.partnerStoreId)?.name || '---'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="hidden lg:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Fermă / Produs</th>
+                        <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Cant. Săpt.</th>
+                        <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Preț Min.</th>
+                        <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Livrare</th>
+                        <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Magazin</th>
+                        <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-slate-400">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {filteredProducts.map((p) => (
+                        <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                          <td className="p-4">
+                            <p className="font-bold text-sm text-jss-green-dark">{p.farmName || '---'}</p>
+                            <p className="text-[10px] opacity-60 italic">{p.type} ({p.certification})</p>
+                          </td>
+                          <td className="p-4 text-sm font-mono">{p.quantity} KG</td>
+                          <td className="p-4 text-sm font-bold">{p.pricePerKg} RON</td>
+                          <td className="p-4 text-[10px] capitalize">{p.deliveryFrequency}</td>
+                          <td className="p-4 text-xs">
+                            {partnerStores.find(s => s.id === p.partnerStoreId)?.name || <span className="opacity-30">---</span>}
+                          </td>
+                          <td className="p-4">
+                            <button 
+                              onClick={() => handleTogglePayment(p.id, p.paymentReceived)}
+                              className={`text-[9px] font-bold px-2 py-1 rounded transition-all ${p.paymentReceived ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
+                            >
+                              {p.paymentReceived ? 'APROBAT' : 'ÎN AȘTEPTARE'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
                 {filteredProducts.length === 0 && (
                   <div className="p-12 text-center text-slate-400 font-serif italic text-sm">Nicio înregistrare găsită.</div>
                 )}
