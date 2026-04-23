@@ -72,18 +72,15 @@ export default function Login({ onAuthComplete }: LoginProps) {
       console.log(`Starting login for ${intendedRole}...`);
       localStorage.setItem('intendedRole', intendedRole);
       const user = await signInWithGoogle();
-      
-      if (!user) {
-        // This might be a redirect-based login starting
-        return;
-      }
-
+      if (!user) return;
       await finalizeLogin(user, intendedRole);
     } catch (error: any) {
       console.error("Login failed:", error);
-      alert(`Eroare la conectare: ${error.message || 'Eroare necunoscută'}. 
-
-Sugestie: Dacă folosești Vercel, asigură-te că domeniul este adăugat în Firebase Console -> Authentication -> Settings -> Authorized domains.`);
+      let message = `Eroare la conectare: ${error.message || 'Eroare necunoscută'}`;
+      if (error.code === 'auth/popup-blocked') {
+        message = "Pop-up-ul a fost blocat de browser. Te rugăm să permiți ferestrele de tip pop-up pentru acest site sau să încerci să deschizi aplicația într-un browser standard (Chrome/Safari).";
+      }
+      alert(message);
     } finally {
       setIsLoggingIn(null);
     }

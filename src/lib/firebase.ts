@@ -137,16 +137,14 @@ export interface AppMessage {
 
 export const signInWithGoogle = async () => {
   try {
-    // For mobile devices, especially in-app browsers, use redirect
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      await signInWithRedirect(auth, googleProvider);
-      return null;
-    }
+    // Prefer signInWithPopup for AI Studio environment as redirect urls 
+    // are often not correctly configured for the iframe preview
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error) {
     console.error("Error signing in with Google:", error);
+    // Fallback to redirect only if popup is blocked and we really have to
+    // But for now, let's keep it simple with popup which is preferred here.
     throw error;
   }
 };
