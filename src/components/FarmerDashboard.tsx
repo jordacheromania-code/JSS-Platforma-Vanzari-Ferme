@@ -525,7 +525,7 @@ export default function FarmerDashboard({ user }: { user: any }) {
                     </div>
                     {product.paymentReceived ? (
                       <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                        <CheckCircle size={12} /> Plătite
+                        <CheckCircle size={12} /> Aprobat
                       </span>
                     ) : (
                       <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">

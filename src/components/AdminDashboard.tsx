@@ -285,7 +285,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                             onClick={() => handleTogglePayment(p.id, p.paymentReceived)}
                             className={`text-[9px] font-bold px-2 py-1 rounded transition-all ${p.paymentReceived ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
                           >
-                            {p.paymentReceived ? 'PLĂTIT' : 'ÎN AȘTEPTARE'}
+                            {p.paymentReceived ? 'APROBAT' : 'ÎN AȘTEPTARE'}
                           </button>
                         </td>
                       </tr>
@@ -355,7 +355,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                                       onClick={() => handleTogglePayment(p.id, p.paymentReceived)}
                                       className={`text-[9px] font-bold px-2 py-1 rounded ${p.paymentReceived ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
                                     >
-                                      {p.paymentReceived ? 'PLĂTIT' : 'ÎN AȘTEPTARE'}
+                                      {p.paymentReceived ? 'APROBAT' : 'ÎN AȘTEPTARE'}
                                     </button>
                                   </td>
                                 </tr>
