@@ -58,6 +58,7 @@ export default function FarmerDashboard({ user }: { user: any }) {
     deliveryTerms: '',
     paymentTerms: '',
     partnerStoreId: '',
+    additionalInfo: '',
   });
 
   useEffect(() => {
@@ -128,6 +129,7 @@ export default function FarmerDashboard({ user }: { user: any }) {
         deliveryTerms: '',
         paymentTerms: '',
         partnerStoreId: '',
+        additionalInfo: '',
       });
     } catch (err) {
       handleFirestoreError(err, 'create', 'products');
@@ -1242,6 +1244,18 @@ export default function FarmerDashboard({ user }: { user: any }) {
                     ))}
                   </select>
                 </div>
+
+                <div className="col-span-2 space-y-1">
+                  <label className="data-tag">Informații Suplimentare (Text Manual)</label>
+                  <textarea 
+                    value={formData.additionalInfo}
+                    onChange={(e) => setFormData({...formData, additionalInfo: e.target.value})}
+                    rows={4}
+                    placeholder="Introdu aici orice alte detalii relevante despre produs, origine, condiții speciale etc..."
+                    className="w-full bg-jss-beige border-none rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-jss-green-primary/50 resize-none text-sm"
+                  />
+                </div>
+
                 <div className="col-span-2 pt-4 flex gap-4">
                   <button 
                     type="button"

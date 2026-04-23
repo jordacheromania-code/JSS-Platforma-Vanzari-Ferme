@@ -400,6 +400,11 @@ export default function AdminDashboard({ user }: { user: any }) {
                                   <td className="p-4">
                                     <div className="font-bold text-jss-green-primary">{p.type}</div>
                                     <div className="text-[9px] uppercase font-bold text-slate-400">{p.certification}</div>
+                                    {p.additionalInfo && (
+                                      <p className="mt-1 text-[9px] text-slate-500 italic bg-jss-beige/30 p-1 rounded">
+                                        Note: {p.additionalInfo}
+                                      </p>
+                                    )}
                                   </td>
                                   <td className="p-4 font-mono font-bold">{p.quantity} KG/L</td>
                                   <td className="p-4 font-bold">{p.pricePerKg} RON</td>

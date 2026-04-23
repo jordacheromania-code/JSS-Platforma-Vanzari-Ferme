@@ -44,7 +44,7 @@ export default function MessagingSystem({ user, isAdmin }: MessagingSystemProps)
     // Determine query based on role and tab
     const q = query(
       collection(db, 'messages'),
-      where(activeTab === 'inbox' ? 'receiverId' : 'senderId', '==', isAdmin && activeTab === 'inbox' ? 'admin' : user.uid),
+      where(activeTab === 'inbox' ? 'receiverId' : 'senderId', '==', isAdmin ? 'admin' : user.uid),
       orderBy('createdAt', 'desc')
     );
 
@@ -68,7 +68,7 @@ export default function MessagingSystem({ user, isAdmin }: MessagingSystemProps)
 
     try {
       await addDoc(collection(db, 'messages'), {
-        senderId: user.uid,
+        senderId: isAdmin ? 'admin' : user.uid,
         senderName: user.displayName || user.email,
         senderRole: isAdmin ? 'admin' : 'farmer',
         receiverId: newMsg.receiverId,
