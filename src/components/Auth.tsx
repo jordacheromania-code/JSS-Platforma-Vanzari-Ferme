@@ -14,19 +14,35 @@ export default function Login({ onAuthComplete }: LoginProps) {
   React.useEffect(() => {
     const checkRedirectResult = async () => {
       try {
+        console.log("Checking for redirect result...");
         const user = await getGoogleRedirectResult();
         if (user) {
-          const storedRole = localStorage.getItem('intendedRole');
-          if (storedRole === 'admin' || storedRole === 'farmer') {
-            await finalizeLogin(user, storedRole as 'admin' | 'farmer');
-            localStorage.removeItem('intendedRole');
+          console.log("Redirect user found:", user.email);
+          let storedRole = localStorage.getItem('intendedRole');
+          
+          // If localStorage was cleared or is blocked in iframe, try to guess or use a default
+          if (!storedRole) {
+            console.warn("intendedRole not found in localStorage, defaulting to farmer");
+            storedRole = 'farmer';
           }
+          
+          await finalizeLogin(user, storedRole as 'admin' | 'farmer');
+          localStorage.removeItem('intendedRole');
+        } else {
+          console.log("No redirect user found.");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Redirect login check failed:", error);
+        if (error.code === 'auth/unauthorized-domain') {
+          alert("Eroare domain neautorizat. Contactați administratorul pentru a adăuga acest domeniu în Firebase Console.");
+        }
       }
     };
-    checkRedirectResult();
+    // Give a small delay for Firebase auth to be ready
+    const timeout = setTimeout(() => {
+      checkRedirectResult();
+    }, 500);
+    return () => clearTimeout(timeout);
   }, []);
 
   const finalizeLogin = async (user: any, intendedRole: 'admin' | 'farmer') => {

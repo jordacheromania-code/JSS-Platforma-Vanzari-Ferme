@@ -19,6 +19,17 @@ export default function AdminDashboard({ user }: { user: any }) {
   const [isAddingStore, setIsAddingStore] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // New States for Custom Modals replacing prompt()
+  const [activeActivityFarmer, setActiveActivityFarmer] = useState<string | null>(null);
+  const [activityNote, setActivityNote] = useState('');
+  const [activityStore, setActivityStore] = useState('Magazin Client');
+  const [activeOpportunityFarmer, setActiveOpportunityFarmer] = useState<string | null>(null);
+  const [opportunityStoreName, setOpportunityStoreName] = useState('');
+  const [opportunityNotes, setOpportunityNotes] = useState('');
+
+  const [editingActivity, setEditingActivity] = useState<any | null>(null);
+  const [editingOpportunity, setEditingOpportunity] = useState<any | null>(null);
 
   const [isBulkAdding, setIsBulkAdding] = useState(false);
   const [bulkText, setBulkText] = useState('');
@@ -171,6 +182,72 @@ export default function AdminDashboard({ user }: { user: any }) {
     p.farmName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.type?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleAddOpportunity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!opportunityStoreName.trim() || !activeOpportunityFarmer) return;
+    try {
+      await addDoc(collection(db, 'opportunities'), {
+        storeName: opportunityStoreName,
+        status: 'Contactat',
+        estimatedValue: 0,
+        targetProducts: [],
+        farmerId: activeOpportunityFarmer,
+        lastAction: 'Adăugat din panoul de gestiune fermă',
+        note: opportunityNotes,
+        nextStepDate: serverTimestamp(),
+        createdAt: serverTimestamp()
+      });
+      setActiveOpportunityFarmer(null);
+      setOpportunityStoreName('');
+      setOpportunityNotes('');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleUpdateOpportunity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingOpportunity) return;
+    try {
+      await updateDoc(doc(db, 'opportunities', editingOpportunity.id), editingOpportunity);
+      setEditingOpportunity(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAddActivity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activityNote.trim() || !activeActivityFarmer) return;
+    try {
+      await addDoc(collection(db, 'teamActivities'), {
+        type: activityNote.toLowerCase().includes('apel') ? 'call' : activityNote.toLowerCase().includes('ofert') ? 'offer' : 'visit',
+        storeName: activityStore,
+        agentName: 'Echipa JSS',
+        notes: activityNote,
+        farmerId: activeActivityFarmer,
+        createdAt: serverTimestamp()
+      });
+      setActiveActivityFarmer(null);
+      setActivityNote('');
+      setActivityStore('Magazin Client');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleUpdateActivity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingActivity) return;
+    try {
+      const { id, ...data } = editingActivity;
+      await updateDoc(doc(db, 'teamActivities', id), data);
+      setEditingActivity(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-jss-beige text-jss-text font-sans">
@@ -545,17 +622,8 @@ export default function AdminDashboard({ user }: { user: any }) {
                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <button 
                                       onClick={() => {
-                                        const note = prompt("Descrie acțiunea (ex: Apel ofertă, Vizită magazin):");
-                                        if (note) {
-                                          addDoc(collection(db, 'teamActivities'), {
-                                            type: note.toLowerCase().includes('apel') ? 'call' : note.toLowerCase().includes('ofert') ? 'offer' : 'visit',
-                                            storeName: 'Magazin Client',
-                                            agentName: 'Echipa JSS',
-                                            notes: note,
-                                            farmerId: farmer.uid,
-                                            createdAt: serverTimestamp()
-                                          });
-                                        }
+                                        setActiveActivityFarmer(farmer.uid);
+                                        setActivityNote('');
                                       }}
                                       className="flex items-center justify-center gap-2 bg-jss-green-primary/10 text-jss-green-primary py-2.5 rounded-xl text-[10px] font-bold uppercase hover:bg-jss-green-primary hover:text-white transition-all"
                                     >
@@ -563,19 +631,8 @@ export default function AdminDashboard({ user }: { user: any }) {
                                     </button>
                                     <button 
                                       onClick={() => {
-                                        const store = prompt("Nume Magazin Oportunitate:");
-                                        if (store) {
-                                          addDoc(collection(db, 'opportunities'), {
-                                            storeName: store,
-                                            status: 'Contactat',
-                                            estimatedValue: 0,
-                                            targetProducts: [],
-                                            farmerId: farmer.uid,
-                                            lastAction: 'Adăugat din panoul de gestiune fermă',
-                                            nextStepDate: serverTimestamp(),
-                                            createdAt: serverTimestamp()
-                                          });
-                                        }
+                                        setActiveOpportunityFarmer(farmer.uid);
+                                        setOpportunityStoreName('');
                                       }}
                                       className="flex items-center justify-center gap-2 bg-blue-50 text-blue-600 py-2.5 rounded-xl text-[10px] font-bold uppercase hover:bg-blue-600 hover:text-white transition-all"
                                     >
@@ -856,9 +913,14 @@ export default function AdminDashboard({ user }: { user: any }) {
                     <div className="pt-2 flex items-center justify-between border-t border-slate-50">
                        <div className="flex items-center gap-1.5 opacity-50">
                          <Calendar size={12} />
-                         <span className="text-[10px] font-bold">Următorul pas: {opp.nextStepDate?.toDate().toLocaleDateString('ro-RO')}</span>
+                         <span className="text-[10px] font-bold">Următorul pas: {opp.nextStepDate?.toDate?.()?.toLocaleDateString('ro-RO') || '---'}</span>
                        </div>
-                       <button className="p-1 px-2 text-[10px] font-bold text-jss-green-dark hover:underline">Detalii</button>
+                       <button 
+                         onClick={() => setEditingOpportunity(opp)}
+                         className="p-1 px-2 text-[10px] font-bold text-jss-green-dark hover:underline"
+                       >
+                         Editează
+                       </button>
                     </div>
                   </div>
                 ))}
@@ -898,6 +960,22 @@ export default function AdminDashboard({ user }: { user: any }) {
                          </div>
                          <div className="flex-[2] min-w-[300px]">
                             <p className="text-xs text-jss-muted italic border-l-2 border-slate-100 pl-4">"{act.notes || act.result}"</p>
+                         </div>
+                         <div className="flex gap-2">
+                            <button 
+                              onClick={() => setEditingActivity(act)}
+                              className="p-2 text-jss-green-primary hover:bg-jss-green-primary/10 rounded-lg transition-colors"
+                            >
+                              <LogOut size={16} className="rotate-180" title="Editează" />
+                            </button>
+                            <button 
+                              onClick={async () => {
+                                if(confirm('Ștergi log-ul?')) await deleteDoc(doc(db, 'teamActivities', act.id));
+                              }}
+                              className="p-2 text-red-300 hover:text-red-500 rounded-lg transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
                          </div>
                          <div className="text-right">
                             <p className="text-xs font-mono font-bold text-slate-400">
@@ -1064,6 +1142,197 @@ export default function AdminDashboard({ user }: { user: any }) {
                   </form>
                 </>
               )}
+            </motion.div>
+          </div>
+        )}
+        {/* Log Activity Create Modal */}
+        {activeActivityFarmer && (
+          <div className="fixed inset-0 bg-jss-green-dark/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl space-y-6"
+            >
+              <div className="flex items-center gap-3 text-jss-green-primary">
+                <ClipboardPaste size={24} />
+                <h3 className="text-xl font-serif font-bold text-jss-green-dark">Log Activitate</h3>
+              </div>
+              <form onSubmit={handleAddActivity} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="data-tag">Magazin / Locație</label>
+                  <input 
+                    type="text"
+                    required
+                    value={activityStore}
+                    onChange={(e) => setActivityStore(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none"
+                    placeholder="Ex: Kaufland, Magazin de cartier..."
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="data-tag">Descriere Detaliată (Manual)</label>
+                  <textarea 
+                    required
+                    autoFocus
+                    value={activityNote}
+                    onChange={(e) => setActivityNote(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-jss-green-light/50 min-h-[100px]"
+                    placeholder="Loghează aici ce s-a discutat sau s-a făcut..."
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <button type="button" onClick={() => setActiveActivityFarmer(null)} className="flex-1 text-xs font-bold uppercase py-3 border border-slate-200 rounded-lg">Anulare</button>
+                  <button type="submit" className="flex-1 bg-jss-green-dark text-white text-xs font-bold uppercase py-3 rounded-lg shadow-lg">Salvează</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Edit Activity Modal */}
+        {editingActivity && (
+          <div className="fixed inset-0 bg-jss-green-dark/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl space-y-6"
+            >
+              <h3 className="text-xl font-serif font-bold text-jss-green-dark">Editează Activitate</h3>
+              <form onSubmit={handleUpdateActivity} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="data-tag">Magazin</label>
+                  <input 
+                    type="text"
+                    value={editingActivity.storeName}
+                    onChange={(e) => setEditingActivity({...editingActivity, storeName: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="data-tag">Notițe</label>
+                  <textarea 
+                    value={editingActivity.notes || editingActivity.result}
+                    onChange={(e) => setEditingActivity({...editingActivity, notes: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none min-h-[150px]"
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <button type="button" onClick={() => setEditingActivity(null)} className="flex-1 text-xs font-bold uppercase py-3 border border-slate-200 rounded-lg">Anulare</button>
+                  <button type="submit" className="flex-1 bg-jss-green-dark text-white text-xs font-bold uppercase py-3 rounded-lg">Salvează</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Opportunity Create Modal */}
+        {activeOpportunityFarmer && (
+          <div className="fixed inset-0 bg-blue-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl space-y-6"
+            >
+              <div className="flex items-center gap-3 text-blue-600">
+                <MapPin size={24} />
+                <h3 className="text-xl font-serif font-bold text-jss-green-dark">Oportunitate Nouă</h3>
+              </div>
+              <form onSubmit={handleAddOpportunity} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="data-tag">Nume Magazin Vizat</label>
+                  <input 
+                    required
+                    autoFocus
+                    type="text"
+                    value={opportunityStoreName}
+                    onChange={(e) => setOpportunityStoreName(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                    placeholder="Nume Magazin..."
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="data-tag">Observații / Notițe</label>
+                  <textarea 
+                    value={opportunityNotes}
+                    onChange={(e) => setOpportunityNotes(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                    placeholder="Detalii despre oportunitate..."
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <button type="button" onClick={() => setActiveOpportunityFarmer(null)} className="flex-1 text-xs font-bold uppercase py-3 border border-slate-200 rounded-lg">Anulare</button>
+                  <button type="submit" className="flex-1 bg-blue-600 text-white text-xs font-bold uppercase py-3 rounded-lg shadow-lg">Creează</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Edit Opportunity Modal */}
+        {editingOpportunity && (
+          <div className="fixed inset-0 bg-blue-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl space-y-6"
+            >
+              <h3 className="text-xl font-serif font-bold text-jss-green-dark">Editează Oportunitate</h3>
+              <form onSubmit={handleUpdateOpportunity} className="grid grid-cols-2 gap-4">
+                <div className="col-span-2 space-y-1">
+                  <label className="data-tag">Nume Magazin</label>
+                  <input 
+                    type="text"
+                    value={editingOpportunity.storeName}
+                    onChange={(e) => setEditingOpportunity({...editingOpportunity, storeName: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="data-tag">Status</label>
+                  <select 
+                    value={editingOpportunity.status}
+                    onChange={(e) => setEditingOpportunity({...editingOpportunity, status: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none"
+                  >
+                    <option value="Contactat">Contactat</option>
+                    <option value="In discutie">În discuție</option>
+                    <option value="Negociere">Negociere</option>
+                    <option value="Oferta trimisa">Ofertă trimisă</option>
+                    <option value="Castigat">Câștigat</option>
+                    <option value="Pierdut">Pierdut</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="data-tag">Valoare Estimatā (RON)</label>
+                  <input 
+                    type="number"
+                    value={editingOpportunity.estimatedValue}
+                    onChange={(e) => setEditingOpportunity({...editingOpportunity, estimatedValue: Number(e.target.value)})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none font-mono"
+                  />
+                </div>
+                <div className="col-span-2 space-y-1">
+                  <label className="data-tag">Ultima Acțiune</label>
+                  <input 
+                    type="text"
+                    value={editingOpportunity.lastAction}
+                    onChange={(e) => setEditingOpportunity({...editingOpportunity, lastAction: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none"
+                  />
+                </div>
+                <div className="col-span-2 space-y-1">
+                  <label className="data-tag">Notițe Detaliate</label>
+                  <textarea 
+                    value={editingOpportunity.note}
+                    onChange={(e) => setEditingOpportunity({...editingOpportunity, note: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none min-h-[100px]"
+                  />
+                </div>
+                <div className="col-span-2 flex gap-4">
+                  <button type="button" onClick={() => setEditingOpportunity(null)} className="flex-1 text-xs font-bold uppercase py-3 border border-slate-200 rounded-lg">Anulare</button>
+                  <button type="submit" className="flex-1 bg-blue-600 text-white text-xs font-bold uppercase py-3 rounded-lg">Actualizează</button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

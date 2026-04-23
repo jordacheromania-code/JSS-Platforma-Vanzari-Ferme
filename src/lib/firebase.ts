@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, query, collection, where, getDocs, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -10,6 +10,7 @@ export const auth = getAuth(app);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export interface AppUser {
   uid: string;
@@ -137,14 +138,22 @@ export interface AppMessage {
 
 export const signInWithGoogle = async () => {
   try {
-    // Prefer signInWithPopup for AI Studio environment as redirect urls 
-    // are often not correctly configured for the iframe preview
+    // Ensure persistence is set
+    await setPersistence(auth, browserLocalPersistence);
+
+    // For mobile devices, especially in-app browsers, use redirect 
+    // as it is often more reliable than popups that get orphaned or blocked
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error) {
     console.error("Error signing in with Google:", error);
-    // Fallback to redirect only if popup is blocked and we really have to
-    // But for now, let's keep it simple with popup which is preferred here.
     throw error;
   }
 };
