@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { LogIn, ShieldCheck, Tractor, Warehouse } from 'lucide-react';
-import { signInWithGoogle, db } from '../lib/firebase';
+import { signInWithGoogle, getGoogleRedirectResult, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface LoginProps {
@@ -11,17 +11,27 @@ interface LoginProps {
 export default function Login({ onAuthComplete }: LoginProps) {
   const [isLoggingIn, setIsLoggingIn] = React.useState<string | null>(null);
 
-  const handleLogin = async (intendedRole: 'admin' | 'farmer') => {
+  React.useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        const user = await getGoogleRedirectResult();
+        if (user) {
+          const storedRole = localStorage.getItem('intendedRole');
+          if (storedRole === 'admin' || storedRole === 'farmer') {
+            await finalizeLogin(user, storedRole as 'admin' | 'farmer');
+            localStorage.removeItem('intendedRole');
+          }
+        }
+      } catch (error) {
+        console.error("Redirect login check failed:", error);
+      }
+    };
+    checkRedirectResult();
+  }, []);
+
+  const finalizeLogin = async (user: any, intendedRole: 'admin' | 'farmer') => {
     setIsLoggingIn(intendedRole);
     try {
-      console.log(`Starting login for ${intendedRole}...`);
-      const user = await signInWithGoogle();
-      
-      if (!user) {
-        setIsLoggingIn(null);
-        return;
-      }
-
       // Special case for admin restriction
       const adminEmail = 'jordache.romania@gmail.com';
       if (intendedRole === 'admin' && user.email !== adminEmail) {
@@ -48,6 +58,27 @@ export default function Login({ onAuthComplete }: LoginProps) {
       }
       
       onAuthComplete(userData);
+    } catch (error: any) {
+      console.error("Login finalization failed:", error);
+      alert(`Eroare la finalizarea conectării: ${error.message}`);
+    } finally {
+      setIsLoggingIn(null);
+    }
+  };
+
+  const handleLogin = async (intendedRole: 'admin' | 'farmer') => {
+    setIsLoggingIn(intendedRole);
+    try {
+      console.log(`Starting login for ${intendedRole}...`);
+      localStorage.setItem('intendedRole', intendedRole);
+      const user = await signInWithGoogle();
+      
+      if (!user) {
+        // This might be a redirect-based login starting
+        return;
+      }
+
+      await finalizeLogin(user, intendedRole);
     } catch (error: any) {
       console.error("Login failed:", error);
       alert(`Eroare la conectare: ${error.message || 'Eroare necunoscută'}. 
