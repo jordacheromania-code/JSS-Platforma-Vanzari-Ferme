@@ -1090,9 +1090,18 @@ export default function FarmerDashboard({ user }: { user: any }) {
                     <option value="Carne Vită" />
                     <option value="Carne Porc" />
                     <option value="Carne Pasăre" />
+                    <option value="Salam de Sibiu" />
+                    <option value="Salam (Diverse tipuri)" />
+                    <option value="Mezeluri (Parizer, Cremvurști)" />
+                    <option value="Mușchi File / Pastramă" />
+                    <option value="Șuncă / Bacon / Kaizer" />
+                    <option value="Cârnați (Afumați/Proaspeți)" />
+                    <option value="Hamburger / Mici" />
                     <option value="Lapte Proaspăt" />
                     <option value="Brânză Telemea" />
                     <option value="Brânză de Vaci" />
+                    <option value="Cașcaval / Brânzeturi Maturate" />
+                    <option value="Iaurt / Smântână" />
                     <option value="Ouă" />
                     <option value="Legume Sezon" />
                   </datalist>
