@@ -32,6 +32,7 @@ export default function AdminDashboard({ user }: { user: any }) {
     regCom: '',
     address: '',
     phone: '',
+    farmId: '',
   });
 
   // Form State for new Potential Partner
@@ -139,7 +140,7 @@ export default function AdminDashboard({ user }: { user: any }) {
     try {
       await addDoc(collection(db, 'partnerStores'), newStore);
       setIsAddingStore(false);
-      setNewStore({ name: '', type: 'mixt', website: '', cui: '', regCom: '', address: '', phone: '' });
+      setNewStore({ name: '', type: 'mixt', website: '', cui: '', regCom: '', address: '', phone: '', farmId: '' });
     } catch (err) {
       console.error(err);
     }
@@ -652,6 +653,12 @@ export default function AdminDashboard({ user }: { user: any }) {
                         <div>
                           <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest leading-none mb-1">{store.type}</p>
                           <h3 className="text-xl font-serif font-bold text-jss-green-dark">{store.name}</h3>
+                          {store.farmId && (
+                            <p className="text-[10px] font-bold text-jss-green-primary bg-jss-green-primary/5 px-2 py-1 rounded-lg mt-1 inline-block border border-jss-green-primary/10">
+                              <CheckCircle size={10} className="inline mr-1" />
+                              Fermă: {farmers.find(f => f.uid === store.farmId)?.farmName || 'Fermă Asociată'}
+                            </p>
+                          )}
                           <div className="flex gap-4 mt-1">
                             {store.cui && <p className="text-[10px] font-mono text-slate-400">CUI: {store.cui}</p>}
                             {store.regCom && <p className="text-[10px] font-mono text-slate-400">RC: {store.regCom}</p>}
@@ -993,6 +1000,21 @@ export default function AdminDashboard({ user }: { user: any }) {
                         <option value="mixt">Mixt / General</option>
                       </select>
                     </div>
+                    {isAddingStore && (
+                      <div className="space-y-1">
+                        <label className="data-tag">Desemnează Ferma</label>
+                        <select 
+                          value={newStore.farmId}
+                          onChange={(e) => setNewStore({...newStore, farmId: e.target.value})}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none appearance-none cursor-pointer font-bold text-jss-green-primary"
+                        >
+                          <option value="">Alege o fermă...</option>
+                          {farmers.map(f => (
+                            <option key={f.uid} value={f.uid}>{f.farmName || f.displayName}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <div className="space-y-1">
                       <label className="data-tag">Link Website</label>
                       <input 
